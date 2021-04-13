@@ -1,6 +1,6 @@
 specVersion: 0.0.2
-description: Compound is an open-source protocol for algorithmic, efficient Money Markets on the Ethereum blockchain.
-repository: https://github.com/graphprotocol/compound-V2-subgraph
+description: Venus is an open-source protocol for algorithmic, efficient Money Markets on the BSC blockchain.
+repository: https://github.com/VenusProtocol/venus-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
@@ -22,14 +22,14 @@ dataSources:
       abis:
         - name: Comptroller
           file: ./abis/comptroller.json
-        - name: CToken
-          file: ./abis/ctoken.json
+        - name: VToken
+          file: ./abis/vtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
         - name: PriceOracle2
           file: ./abis/priceOracle2.json
-        - name: ERC20
-          file: ./abis/erc20.json
+        - name: BEP20
+          file: ./abis/bep20.json
       eventHandlers:
         - event: MarketListed(address)
           handler: handleMarketListed
@@ -48,29 +48,29 @@ dataSources:
         - event: NewPriceOracle(address,address)
           handler: handleNewPriceOracle
 templates:
-  - name: CToken
+  - name: VToken
     kind: ethereum/contract
     network: mainnet
     source:
-      abi: CToken
+      abi: VToken
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
-      file: ./src/mappings/ctoken.ts
+      file: ./src/mappings/vtoken.ts
       entities:
         - User
         - Market
-        - CTokenInfo
+        - VTokenInfo
       abis:
-        - name: CToken
-          file: ./abis/ctoken.json
+        - name: VToken
+          file: ./abis/vtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
         - name: PriceOracle2
           file: ./abis/priceOracle2.json
-        - name: ERC20
-          file: ./abis/erc20.json
+        - name: BEP20
+          file: ./abis/bep20.json
       eventHandlers:
         - event: Mint(address,uint256,uint256)
           handler: handleMint

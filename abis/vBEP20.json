@@ -770,7 +770,7 @@
         "type": "uint256"
       },
       {
-        "name": "cTokenCollateral",
+        "name": "vTokenCollateral",
         "type": "address"
       }
     ],
@@ -839,7 +839,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "isCToken",
+    "name": "isVToken",
     "outputs": [
       {
         "name": "",
@@ -1037,7 +1037,7 @@
       },
       {
         "indexed": false,
-        "name": "cTokenCollateral",
+        "name": "vTokenCollateral",
         "type": "address"
       },
       {
