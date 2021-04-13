@@ -2,7 +2,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "cEthAddress",
+    "name": "vBnbAddress",
     "outputs": [
       {
         "name": "",
@@ -58,7 +58,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "cDaiAddress",
+    "name": "vDaiAddress",
     "outputs": [
       {
         "name": "",
@@ -73,7 +73,7 @@
     "constant": true,
     "inputs": [
       {
-        "name": "cToken",
+        "name": "vToken",
         "type": "address"
       }
     ],
@@ -105,7 +105,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "cUsdcAddress",
+    "name": "vUsdcAddress",
     "outputs": [
       {
         "name": "",
@@ -127,15 +127,15 @@
         "type": "address"
       },
       {
-        "name": "cEthAddress_",
+        "name": "vBnbAddress_",
         "type": "address"
       },
       {
-        "name": "cUsdcAddress_",
+        "name": "vUsdcAddress_",
         "type": "address"
       },
       {
-        "name": "cDaiAddress_",
+        "name": "vDaiAddress_",
         "type": "address"
       }
     ],

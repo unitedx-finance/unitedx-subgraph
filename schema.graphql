@@ -15,44 +15,44 @@ type Comptroller @entity {
 }
 
 """
-Market stores all high level variables for a cToken market
+Market stores all high level variables for a vToken market
 """
 type Market @entity {
-    #Fields that match compounds API
-    "Yearly borrow rate. With 2102400 blocks per year"
+    #Fields that match Venus API
+    "Borrow rate per block"
     borrowRate: BigDecimal!
-    "The cToken contract balance of ERC20 or ETH"
+    "The vToken contract balance of BEP20 or BNB"
     cash: BigDecimal!
     "Collateral factor determining how much one can borrow"
     collateralFactor: BigDecimal!
-    "Exchange rate of tokens / cTokens"
+    "Exchange rate of tokens / vTokens"
     exchangeRate:  BigDecimal!
     "Address of the interest rate model"
     interestRateModelAddress: Bytes!
-    "Name of the cToken"
+    "Name of the vToken"
     name: String!
     "Reserves stored in the contract"
     reserves: BigDecimal!
-    "Yearly supply rate. With 2104400 blocks per year"
+    "Supply rate per block"
     supplyRate: BigDecimal!
-    "CToken symbol"
+    "VToken symbol"
     symbol: String!
-    "CToken address"
+    "VToken address"
     id: ID!
     "Borrows in the market"
     totalBorrows: BigDecimal!
-    "CToken supply. CTokens have 8 decimals"
+    "VToken supply. VTokens have 8 decimals"
     totalSupply: BigDecimal!
     "Underlying token address"
     underlyingAddress: Bytes!
     "Underlying token name"
     underlyingName: String!
-    "Underlying price of token in ETH (ex. 0.007 DAI)"
+    "Underlying price of token in BNB (ex. 0.007 DAI)"
     underlyingPrice: BigDecimal!
     "Underlying token symbol"
     underlyingSymbol: String!
 
-    # Fields that are not in compounds api
+    # Fields that are not in Venus api
     "Block the market is updated to"
     accrualBlockNumber: Int!
     "Timestamp the market was most recently updated"
@@ -68,14 +68,14 @@ type Market @entity {
 }
 
 """
-Account is an ETH address, with a list of all cToken markets the account has
+Account is an BNB address, with a list of all vToken markets the account has
 participated in, along with liquidation information.
 """
 type Account @entity {
-    "User ETH address"
+    "User BNB address"
     id: ID!
-    "Array of CTokens user is in"
-    tokens: [AccountCToken!]! @derivedFrom(field: "account")
+    "Array of VTokens user is in"
+    tokens: [AccountVToken!]! @derivedFrom(field: "account")
     "Count user has been liquidated"
     countLiquidated: Int!
     "Count user has liquidated others"
@@ -96,27 +96,27 @@ type Account @entity {
 }
 
 """
-AccountCToken is a single account within a single cToken market, with data such
+AccountVToken is a single account within a single vToken market, with data such
 as interest earned or paid
 """
-type AccountCToken @entity {
-    "Concatenation of CToken address and user address"
+type AccountVToken @entity {
+    "Concatenation of VToken address and user address"
     id: ID!
     "Relation to market"
     market: Market!
-    "Symbol of the cToken"
+    "Symbol of the vToken"
     symbol: String!
     "Relation to user"
     account: Account!
     "Transactions data"
-    transactions: [AccountCTokenTransaction!]! @derivedFrom(field:"account")
+    transactions: [AccountVTokenTransaction!]! @derivedFrom(field:"account")
     "Block number this asset was updated at in the contract"
     accrualBlockNumber: BigInt!
     "True if user is entered, false if they are exited"
     enteredMarket: Boolean!
 
-    "CToken balance of the user"
-    cTokenBalance: BigDecimal!
+    "VToken balance of the user"
+    vTokenBalance: BigDecimal!
     "Total amount of underlying supplied"
     totalUnderlyingSupplied: BigDecimal!
     "Total amount of underling redeemed"
@@ -135,7 +135,7 @@ type AccountCToken @entity {
     # They do not need to be in the schema, but they will show up in the explorer playground
 
     # supplyBalanceUnderlying: BigDecimal!
-    # FORMULA: supplyBalanceUnderlying = cTokenBalance * market.exchangeRate
+    # FORMULA: supplyBalanceUnderlying = vTokenBalance * market.exchangeRate
 
     # lifetimeSupplyInterestAccrued: BigDecimal!
     # FORMULA: lifetimeSupplyInterestAccrued = supplyBalanceUnderlying - totalUnderlyingSupplied + totalUnderlyingRedeemed
@@ -148,12 +148,12 @@ type AccountCToken @entity {
 }
 
 """
-Auxiliary entity for AccountCToken
+Auxiliary entity for AccountVToken
 """
-type AccountCTokenTransaction @entity {
+type AccountVTokenTransaction @entity {
   id: ID!
 
-  account: AccountCToken!
+  account: AccountVToken!
 
   tx_hash: Bytes!
 
@@ -165,13 +165,13 @@ type AccountCTokenTransaction @entity {
 }
 
 """
-An interface for a transfer of any cToken. TransferEvent, MintEvent,
+An interface for a transfer of any vToken. TransferEvent, MintEvent,
 RedeemEvent, and LiquidationEvent all use this interface
 """
-interface CTokenTransfer {
+interface VTokenTransfer {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "vTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -181,18 +181,18 @@ interface CTokenTransfer {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the vToken transferred"
+    vTokenSymbol: String!
 }
 
 """
 TransferEvent will be stored for every mint, redeem, liquidation, and any normal
 transfer between two accounts.
 """
-type TransferEvent implements CTokenTransfer @entity {
+type TransferEvent implements VTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "vTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -202,43 +202,43 @@ type TransferEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the vToken transferred"
+    vTokenSymbol: String!
 }
 
 """
-MintEvent stores information for mints. From address will always be a cToken
+MintEvent stores information for mints. From address will always be a vToken
 market address
 """
-type MintEvent implements CTokenTransfer @entity {
+type MintEvent implements VTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "vTokens transferred"
     amount: BigDecimal!
     "Account that received tokens (minter)"
     to: Bytes!
-    "Account that sent tokens (CToken contract)"
+    "Account that sent tokens (VToken contract)"
     from: Bytes!
     "Block number"
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the vToken transferred"
+    vTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 RedeemEvent stores information for redeems. To address will always be a
-cToken market address
+vToken market address
 """
-type RedeemEvent implements CTokenTransfer @entity {
+type RedeemEvent implements VTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens transferred"
+    "vTokens transferred"
     amount: BigDecimal!
-    "Account that received tokens (CToken contract)"
+    "Account that received tokens (VToken contract)"
     to: Bytes!
     "Account that sent tokens (redeemer)"
     from: Bytes!
@@ -246,20 +246,20 @@ type RedeemEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the cToken transferred"
-    cTokenSymbol: String!
+    "Symbol of the vToken transferred"
+    vTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 LiquidationEvent stores information for liquidations. The event is emitted from
-the cToken market address.
+the vToken market address.
 """
-type LiquidationEvent implements CTokenTransfer @entity {
+type LiquidationEvent implements VTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "cTokens seized"
+    "vTokens seized"
     amount: BigDecimal!
     "Liquidator receiving tokens"
     to: Bytes!
@@ -269,11 +269,11 @@ type LiquidationEvent implements CTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "cToken that was sezied as collateral"
-    cTokenSymbol: String!
+    "vToken that was sezied as collateral"
+    vTokenSymbol: String!
     "Symbol of the underlying asset repaid through liquidation"
     underlyingSymbol: String!
-    "Underlying cToken amount that was repaid by liquidator"
+    "Underlying vToken amount that was repaid by liquidator"
     underlyingRepayAmount: BigDecimal!
 }
 

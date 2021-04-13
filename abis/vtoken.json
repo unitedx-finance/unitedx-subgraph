@@ -461,7 +461,7 @@
       },
       {
         "indexed": false,
-        "name": "cTokenCollateral",
+        "name": "vTokenCollateral",
         "type": "address"
       },
       {
