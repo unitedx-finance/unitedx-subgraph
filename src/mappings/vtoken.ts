@@ -45,6 +45,9 @@ import {
  */
 export function handleMint(event: Mint): void {
   let market = Market.load(event.address.toHexString())
+  if (!market) {
+    market = createMarket(event.address.toHexString())
+  }
   let mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -84,6 +87,9 @@ export function handleMint(event: Mint): void {
  */
 export function handleRedeem(event: Redeem): void {
   let market = Market.load(event.address.toHexString())
+  if (!market) {
+    market = createMarket(event.address.toHexString())
+  }
   let redeemID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -120,6 +126,9 @@ export function handleRedeem(event: Redeem): void {
  */
 export function handleBorrow(event: Borrow): void {
   let market = Market.load(event.address.toHexString())
+  if (!market) {
+    market = createMarket(event.address.toHexString())
+  }
   let accountID = event.params.borrower.toHex()
   let account = Account.load(accountID)
   if (account == null) {
@@ -196,6 +205,9 @@ export function handleBorrow(event: Borrow): void {
  */
 export function handleRepayBorrow(event: RepayBorrow): void {
   let market = Market.load(event.address.toHexString())
+  if (!market) {
+    market = createMarket(event.address.toHexString())
+  }
   let accountID = event.params.borrower.toHex()
   let account = Account.load(accountID)
   if (account == null) {
@@ -293,7 +305,13 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   // the underwater borrower. So we must get that address from the event, and
   // the repay token is the event.address
   let marketRepayToken = Market.load(event.address.toHexString())
+  if (!marketRepayToken) {
+    marketRepayToken = createMarket(event.address.toHexString())
+  }
   let marketVTokenLiquidated = Market.load(event.params.vTokenCollateral.toHexString())
+  if (!marketVTokenLiquidated) {
+    marketVTokenLiquidated = createMarket(event.params.vTokenCollateral.toHexString())
+  }
   let mintID = event.transaction.hash
     .toHexString()
     .concat('-')
@@ -340,6 +358,9 @@ export function handleTransfer(event: Transfer): void {
   // with normal transfers, since mint, redeem, and seize transfers will already run updateMarket()
   let marketID = event.address.toHexString()
   let market = Market.load(marketID)
+  if (!market) {
+    market = createMarket(marketID)
+  }
   if (market.accrualBlockNumber != event.block.number.toI32()) {
     market = updateMarket(
       event.address,
@@ -445,6 +466,9 @@ export function handleAccrueInterest(event: AccrueInterest): void {
 export function handleNewReserveFactor(event: NewReserveFactor): void {
   let marketID = event.address.toHex()
   let market = Market.load(marketID)
+  if (!market) {
+    market = createMarket(marketID)
+  }
   market.reserveFactor = event.params.newReserveFactorMantissa
   market.save()
 }

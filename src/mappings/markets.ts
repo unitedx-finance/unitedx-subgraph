@@ -26,6 +26,9 @@ function getTokenPrice(
   underlyingDecimals: i32,
 ): BigDecimal {
   let comptroller = Comptroller.load('1')
+  if (!comptroller) {
+    comptroller = new Comptroller('1')
+  }
   let oracleAddress = comptroller.priceOracle as Address
   let underlyingPrice: BigDecimal
 
@@ -103,6 +106,9 @@ export function createMarket(marketAddress: string): Market {
 
 function getBNBinUSD(blockNumber: i32): BigDecimal {
   let comptroller = Comptroller.load('1')
+  if (!comptroller) {
+    comptroller = new Comptroller('1')
+  }
   let oracleAddress = comptroller.priceOracle as Address
   let oracle = PriceOracle2.bind(oracleAddress)
   let bnbPriceInUSD = oracle
