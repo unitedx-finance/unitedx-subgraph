@@ -5,13 +5,13 @@ type Comptroller @entity {
     "ID is set to 1"
     id: ID!
     "Address of price oracle the comptroller uses"
-    priceOracle: Bytes
+    priceOracle: Bytes!
     "Factor used to determine repayAmount for liquidating"
-    closeFactor: BigInt
+    closeFactor: BigInt!
     "The percent bonus liquidators get for liquidating"
-    liquidationIncentive: BigInt
+    liquidationIncentive: BigInt!
     "Max assets a single user can enter"
-    maxAssets: BigInt
+    maxAssets: BigInt!
 }
 
 """
@@ -82,6 +82,8 @@ type Account @entity {
     countLiquidator: Int!
     "True if user has ever borrowed"
     hasBorrowed: Boolean!
+    "User liquidity"
+    liquidity: [BigDecimal!]!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
     # to date values based on the block delta for market.exchangeRate and market.borrowIndex

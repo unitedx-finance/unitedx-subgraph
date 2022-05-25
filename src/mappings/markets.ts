@@ -1,7 +1,7 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
 
 // For each division by 10, add one to exponent to truncate one significant figure
-import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
+import { Address, BigDecimal, BigInt, Bytes, log } from '@graphprotocol/graph-ts'
 import { Market, Comptroller } from '../types/schema'
 import { PriceOracle2 } from '../types/templates/VToken/PriceOracle2'
 import { BEP20 } from '../types/templates/VToken/BEP20'
@@ -29,7 +29,11 @@ function getTokenPrice(
   if (!comptroller) {
     comptroller = new Comptroller('1')
   }
-  let oracleAddress = comptroller.priceOracle as Address
+  if (!comptroller.priceOracle) {
+    log.debug('[getTokenPrice] empty price oracle: {}', ['0']);
+    return BigDecimal.zero();
+  }
+  let oracleAddress = Address.fromBytes(comptroller.priceOracle);
   let underlyingPrice: BigDecimal
 
   /* PriceOracle2 is used from starting of Comptroller.
@@ -53,6 +57,8 @@ export function createMarket(marketAddress: string): Market {
   let market: Market
   let contract = VToken.bind(Address.fromString(marketAddress))
 
+  log.debug('[createMarket] market address: {}', [marketAddress]);
+
   // It is vBNB, which has a slightly different interface
   if (marketAddress == vBNBAddress) {
     market = new Market(marketAddress)
@@ -68,7 +74,8 @@ export function createMarket(marketAddress: string): Market {
   } else {
     market = new Market(marketAddress)
     market.underlyingAddress = contract.underlying()
-    let underlyingContract = BEP20.bind(market.underlyingAddress as Address)
+    log.debug('[createMarket] market underlying address: {}', [market.underlyingAddress.toHexString()]);
+    let underlyingContract = BEP20.bind(Address.fromBytes(market.underlyingAddress));
     market.underlyingDecimals = underlyingContract.decimals()
     market.underlyingName = underlyingContract.name()
     market.underlyingSymbol = underlyingContract.symbol()
@@ -109,7 +116,8 @@ function getBNBinUSD(blockNumber: i32): BigDecimal {
   if (!comptroller) {
     comptroller = new Comptroller('1')
   }
-  let oracleAddress = comptroller.priceOracle as Address
+  log.debug('[getBNBinUSD] price oracle: {}', [comptroller.priceOracle.toHexString()]);
+  let oracleAddress = Address.fromBytes(comptroller.priceOracle);
   let oracle = PriceOracle2.bind(oracleAddress)
   let bnbPriceInUSD = oracle
     .getUnderlyingPrice(Address.fromString(vBNBAddress))
@@ -126,6 +134,7 @@ export function updateMarket(
   let marketID = marketAddress.toHexString()
   let market = Market.load(marketID)
   if (market == null) {
+    log.debug('[updateMarket] market null: {}, creating...', [marketAddress.toHexString()])
     market = createMarket(marketID)
   }
 
@@ -143,12 +152,16 @@ export function updateMarket(
       let tokenPriceUSD = getTokenPrice(
         blockNumber,
         contractAddress,
-        market.underlyingAddress as Address,
+        Address.fromBytes(market.underlyingAddress),
         market.underlyingDecimals,
       )
-      market.underlyingPrice = tokenPriceUSD
-        .div(bnbPriceInUSD)
-        .truncate(market.underlyingDecimals)
+      if (bnbPriceInUSD.equals(BigDecimal.zero())) {
+        market.underlyingPrice = BigDecimal.zero();
+      } else {
+        market.underlyingPrice = tokenPriceUSD
+          .div(bnbPriceInUSD)
+          .truncate(market.underlyingDecimals)
+      }
       // if USDC, we only update BNB price
       if (market.id != vUSDCAddress) {
         market.underlyingPriceUSD = tokenPriceUSD.truncate(market.underlyingDecimals)
