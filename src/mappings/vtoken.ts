@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
-import { Address } from '@graphprotocol/graph-ts';
+import { Address } from '@graphprotocol/graph-ts'
 import {
   Mint,
   Redeem,
@@ -29,7 +29,6 @@ import {
   exponentToBigDecimal,
   vTokenDecimalsBD,
   vTokenDecimals,
-  updateAccountLiquidity,
 } from './helpers'
 
 /* Account supplies assets into market and receives vTokens in exchange
@@ -73,8 +72,6 @@ export function handleMint(event: Mint): void {
   mint.vTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
   mint.save()
-
-  updateAccountLiquidity(event.params.minter);
 }
 
 /*  Account supplies vTokens into market and receives underlying asset in exchange
@@ -117,8 +114,6 @@ export function handleRedeem(event: Redeem): void {
   redeem.vTokenSymbol = market.symbol
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
-
-  updateAccountLiquidity(Address.fromBytes(redeem.to));
 }
 
 /* Borrow assets from the protocol. All values either BNB or BEP20
@@ -193,8 +188,6 @@ export function handleBorrow(event: Borrow): void {
   borrow.blockTime = event.block.timestamp.toI32()
   borrow.underlyingSymbol = market.underlyingSymbol
   borrow.save()
-
-  updateAccountLiquidity(Address.fromBytes(borrow.borrower));
 }
 
 /* Repay some amount borrowed. Anyone can repay anyones balance
@@ -273,8 +266,6 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   repay.underlyingSymbol = market.underlyingSymbol
   repay.payer = event.params.payer
   repay.save()
-
-  updateAccountLiquidity(Address.fromBytes(repay.borrower));
 }
 
 /*
@@ -346,8 +337,6 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   liquidation.underlyingRepayAmount = underlyingRepayAmount
   liquidation.vTokenSymbol = marketVTokenLiquidated.symbol
   liquidation.save()
-
-  updateAccountLiquidity(Address.fromBytes(liquidation.to));
 }
 
 /* Transferring of vTokens
@@ -469,9 +458,6 @@ export function handleTransfer(event: Transfer): void {
   transfer.blockTime = event.block.timestamp.toI32()
   transfer.vTokenSymbol = market.symbol
   transfer.save()
-
-  updateAccountLiquidity(event.params.from);
-  updateAccountLiquidity(event.params.to);
 }
 
 export function handleAccrueInterest(event: AccrueInterest): void {

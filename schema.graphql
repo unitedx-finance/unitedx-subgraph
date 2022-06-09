@@ -82,8 +82,6 @@ type Account @entity {
     countLiquidator: Int!
     "True if user has ever borrowed"
     hasBorrowed: Boolean!
-    "User liquidity"
-    liquidity: [BigDecimal!]!
 
     # The following values are added by the JS Wrapper, and must be calculated with the most up
     # to date values based on the block delta for market.exchangeRate and market.borrowIndex
