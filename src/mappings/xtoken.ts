@@ -10,7 +10,7 @@ import {
   AccrueInterest,
   NewReserveFactor,
   NewMarketInterestRateModel,
-} from '../types/templates/VToken/VToken'
+} from '../types/templates/XErc20/XToken'
 import {
   Market,
   Account,
@@ -25,24 +25,25 @@ import {
 import { createMarket, updateMarket } from './markets'
 import {
   createAccount,
-  updateCommonVTokenStats,
+  updateCommonXTokenStats,
   exponentToBigDecimal,
-  vTokenDecimalsBD,
-  vTokenDecimals,
+  xTokenDecimalsBD,
+  xTokenDecimals,
+  zeroBD,
 } from './helpers'
 
-/* Account supplies assets into market and receives vTokens in exchange
+/* Account supplies assets into market and receives xTokens in exchange
  *
  * event.mintAmount is the underlying asset
- * event.mintTokens is the amount of vTokens minted
+ * event.mintTokens is the amount of xTokens minted
  * event.minter is the account
  *
  * Notes
  *    Transfer event will always get emitted with this
- *    Mints originate from the vToken address, not 0x000000, which is typical of ERC-20s
+ *    Mints originate from the xToken address, not 0x000000, which is typical of ERC-20s
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonVTokenStats, handleTransfer() will
- *    No need to update vTokenBalance, handleTransfer() will
+ *    No need to updateCommonXTokenStats, handleTransfer() will
+ *    No need to update xTokenBalance, handleTransfer() will
  */
 export function handleMint(event: Mint): void {
   let market = Market.load(event.address.toHexString())
@@ -54,37 +55,37 @@ export function handleMint(event: Mint): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let vTokenAmount = event.params.mintTokens
+  let xTokenAmount = event.params.mintTokens
     .toBigDecimal()
-    .div(vTokenDecimalsBD)
-    .truncate(vTokenDecimals)
+    .div(xTokenDecimalsBD)
+    .truncate(xTokenDecimals)
   let underlyingAmount = event.params.mintAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
   let mint = new MintEvent(mintID)
-  mint.amount = vTokenAmount
+  mint.amount = xTokenAmount
   mint.to = event.params.minter
   mint.from = event.address
   mint.blockNumber = event.block.number.toI32()
   mint.blockTime = event.block.timestamp.toI32()
-  mint.vTokenSymbol = market.symbol
+  mint.xTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
   mint.save()
 }
 
-/*  Account supplies vTokens into market and receives underlying asset in exchange
+/*  Account supplies xTokens into market and receives underlying asset in exchange
  *
  *  event.redeemAmount is the underlying asset
- *  event.redeemTokens is the vTokens
+ *  event.redeemTokens is the xTokens
  *  event.redeemer is the account
  *
  *  Notes
  *    Transfer event will always get emitted with this
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this
- *    No need to updateCommonVTokenStats, handleTransfer() will
- *    No need to update vTokenBalance, handleTransfer() will
+ *    No need to updateCommonXTokenStats, handleTransfer() will
+ *    No need to update xTokenBalance, handleTransfer() will
  */
 export function handleRedeem(event: Redeem): void {
   let market = Market.load(event.address.toHexString())
@@ -96,22 +97,22 @@ export function handleRedeem(event: Redeem): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let vTokenAmount = event.params.redeemTokens
+  let xTokenAmount = event.params.redeemTokens
     .toBigDecimal()
-    .div(vTokenDecimalsBD)
-    .truncate(vTokenDecimals)
+    .div(xTokenDecimalsBD)
+    .truncate(xTokenDecimals)
   let underlyingAmount = event.params.redeemAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
   let redeem = new RedeemEvent(redeemID)
-  redeem.amount = vTokenAmount
+  redeem.amount = xTokenAmount
   redeem.to = event.address
   redeem.from = event.params.redeemer
   redeem.blockNumber = event.block.number.toI32()
   redeem.blockTime = event.block.timestamp.toI32()
-  redeem.vTokenSymbol = market.symbol
+  redeem.xTokenSymbol = market.symbol
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
 }
@@ -138,9 +139,9 @@ export function handleBorrow(event: Borrow): void {
   account.hasBorrowed = true
   account.save()
 
-  // Update vTokenStats common for all events, and return the stats to update unique
+  // Update xTokenStats common for all events, and return the stats to update unique
   // values for each event
-  let vTokenStats = updateCommonVTokenStats(
+  let xTokenStats = updateCommonXTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -154,16 +155,18 @@ export function handleBorrow(event: Borrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
 
-  vTokenStats.storedBorrowBalance = event.params.accountBorrows
+  let previousBorrow = xTokenStats.storedBorrowBalance
+
+  xTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
-  vTokenStats.accountBorrowIndex = market.borrowIndex
-  vTokenStats.totalUnderlyingBorrowed = vTokenStats.totalUnderlyingBorrowed.plus(
+  xTokenStats.accountBorrowIndex = market.borrowIndex
+  xTokenStats.totalUnderlyingBorrowed = xTokenStats.totalUnderlyingBorrowed.plus(
     borrowAmountBD,
   )
-  vTokenStats.save()
+  xTokenStats.save()
 
   let borrowID = event.transaction.hash
     .toHexString()
@@ -215,9 +218,9 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     createAccount(accountID)
   }
 
-  // Update vTokenStats common for all events, and return the stats to update unique
+  // Update xTokenStats common for all events, and return the stats to update unique
   // values for each event
-  let vTokenStats = updateCommonVTokenStats(
+  let xTokenStats = updateCommonXTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -231,16 +234,16 @@ export function handleRepayBorrow(event: RepayBorrow): void {
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
 
-  vTokenStats.storedBorrowBalance = event.params.accountBorrows
+  xTokenStats.storedBorrowBalance = event.params.accountBorrows
     .toBigDecimal()
     .div(exponentToBigDecimal(market.underlyingDecimals))
     .truncate(market.underlyingDecimals)
 
-  vTokenStats.accountBorrowIndex = market.borrowIndex
-  vTokenStats.totalUnderlyingRepaid = vTokenStats.totalUnderlyingRepaid.plus(
+  xTokenStats.accountBorrowIndex = market.borrowIndex
+  xTokenStats.totalUnderlyingRepaid = xTokenStats.totalUnderlyingRepaid.plus(
     repayAmountBD,
   )
-  vTokenStats.save()
+  xTokenStats.save()
 
   let repayID = event.transaction.hash
     .toHexString()
@@ -271,17 +274,17 @@ export function handleRepayBorrow(event: RepayBorrow): void {
 /*
  * Liquidate an account who has fell below the collateral factor.
  *
- * event.params.borrower - the borrower who is getting liquidated of their vTokens
- * event.params.vTokenCollateral - the market ADDRESS of the vtoken being liquidated
+ * event.params.borrower - the borrower who is getting liquidated of their xTokens
+ * event.params.xTokenCollateral - the market ADDRESS of the vtoken being liquidated
  * event.params.liquidator - the liquidator
  * event.params.repayAmount - the amount of underlying to be repaid
- * event.params.seizeTokens - vTokens seized (transfer event should handle this)
+ * event.params.seizeTokens - xTokens seized (transfer event should handle this)
  *
  * Notes
  *    No need to updateMarket(), handleAccrueInterest() ALWAYS runs before this.
  *    When calling this function, event RepayBorrow, and event Transfer will be called every
  *    time. This means we can ignore repayAmount. Seize tokens only changes state
- *    of the vTokens, which is covered by transfer. Therefore we only
+ *    of the xTokens, which is covered by transfer. Therefore we only
  *    add liquidation counts in this handler.
  */
 export function handleLiquidateBorrow(event: LiquidateBorrow): void {
@@ -302,57 +305,57 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   borrower.save()
 
   // For a liquidation, the liquidator pays down the borrow of the underlying
-  // asset. They seize one of potentially many types of vToken collateral of
+  // asset. They seize one of potentially many types of xToken collateral of
   // the underwater borrower. So we must get that address from the event, and
   // the repay token is the event.address
   let marketRepayToken = Market.load(event.address.toHexString())
   if (!marketRepayToken) {
     marketRepayToken = createMarket(event.address.toHexString())
   }
-  let marketVTokenLiquidated = Market.load(event.params.vTokenCollateral.toHexString())
-  if (!marketVTokenLiquidated) {
-    marketVTokenLiquidated = createMarket(event.params.vTokenCollateral.toHexString())
+  let marketXTokenLiquidated = Market.load(event.params.cTokenCollateral.toHexString())
+  if (!marketXTokenLiquidated) {
+    marketXTokenLiquidated = createMarket(event.params.cTokenCollateral.toHexString())
   }
   let mintID = event.transaction.hash
     .toHexString()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let vTokenAmount = event.params.seizeTokens
+  let xTokenAmount = event.params.seizeTokens
     .toBigDecimal()
-    .div(vTokenDecimalsBD)
-    .truncate(vTokenDecimals)
+    .div(xTokenDecimalsBD)
+    .truncate(xTokenDecimals)
   let underlyingRepayAmount = event.params.repayAmount
     .toBigDecimal()
     .div(exponentToBigDecimal(marketRepayToken.underlyingDecimals))
     .truncate(marketRepayToken.underlyingDecimals)
 
   let liquidation = new LiquidationEvent(mintID)
-  liquidation.amount = vTokenAmount
+  liquidation.amount = xTokenAmount
   liquidation.to = event.params.liquidator
   liquidation.from = event.params.borrower
   liquidation.blockNumber = event.block.number.toI32()
   liquidation.blockTime = event.block.timestamp.toI32()
   liquidation.underlyingSymbol = marketRepayToken.underlyingSymbol
   liquidation.underlyingRepayAmount = underlyingRepayAmount
-  liquidation.vTokenSymbol = marketVTokenLiquidated.symbol
+  liquidation.xTokenSymbol = marketXTokenLiquidated.symbol
   liquidation.save()
 }
 
-/* Transferring of vTokens
+/* Transferring of xTokens
  *
- * event.params.from = sender of vTokens
- * event.params.to = receiver of vTokens
+ * event.params.from = sender of xTokens
+ * event.params.to = receiver of xTokens
  * event.params.amount = amount sent
  *
  * Notes
  *    Possible ways to emit Transfer:
  *      seize() - i.e. a Liquidation Transfer (does not emit anything else)
- *      redeemFresh() - i.e. redeeming your vTokens for underlying asset
+ *      redeemFresh() - i.e. redeeming your xTokens for underlying asset
  *      mintFresh() - i.e. you are lending underlying assets to create vtokens
  *      transfer() - i.e. a basic transfer
  *    This function handles all 4 cases. Transfer is emitted alongside the mint, redeem, and seize
- *    events. So for those events, we do not update vToken balances.
+ *    events. So for those events, we do not update xToken balances.
  */
 export function handleTransfer(event: Transfer): void {
   // We only updateMarket() if accrual block number is not up to date. This will only happen
@@ -371,11 +374,11 @@ export function handleTransfer(event: Transfer): void {
   }
 
   let amountUnderlying = market.exchangeRate.times(
-    event.params.amount.toBigDecimal().div(vTokenDecimalsBD),
+    event.params.amount.toBigDecimal().div(xTokenDecimalsBD),
   )
   let amountUnderylingTruncated = amountUnderlying.truncate(market.underlyingDecimals)
 
-  // Checking if the tx is FROM the vToken contract (i.e. this will not run when minting)
+  // Checking if the tx is FROM the xToken contract (i.e. this will not run when minting)
   // If so, it is a mint, and we don't need to run these calculations
   let accountFromID = event.params.from.toHex()
   if (accountFromID != marketID) {
@@ -384,9 +387,9 @@ export function handleTransfer(event: Transfer): void {
       createAccount(accountFromID)
     }
 
-    // Update vTokenStats common for all events, and return the stats to update unique
+    // Update xTokenStats common for all events, and return the stats to update unique
     // values for each event
-    let vTokenStatsFrom = updateCommonVTokenStats(
+    let xTokenStatsFrom = updateCommonXTokenStats(
       market.id,
       market.symbol,
       accountFromID,
@@ -396,22 +399,22 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    vTokenStatsFrom.vTokenBalance = vTokenStatsFrom.vTokenBalance.minus(
+    xTokenStatsFrom.xTokenBalance = xTokenStatsFrom.xTokenBalance.minus(
       event.params.amount
         .toBigDecimal()
-        .div(vTokenDecimalsBD)
-        .truncate(vTokenDecimals),
+        .div(xTokenDecimalsBD)
+        .truncate(xTokenDecimals),
     )
 
-    vTokenStatsFrom.totalUnderlyingRedeemed = vTokenStatsFrom.totalUnderlyingRedeemed.plus(
+    xTokenStatsFrom.totalUnderlyingRedeemed = xTokenStatsFrom.totalUnderlyingRedeemed.plus(
       amountUnderylingTruncated,
     )
-    vTokenStatsFrom.save()
+    xTokenStatsFrom.save()
   }
 
-  // Checking if the tx is TO the vToken contract (i.e. this will not run when redeeming)
+  // Checking if the tx is TO the xToken contract (i.e. this will not run when redeeming)
   // If so, we ignore it. this leaves an edge case, where someone who accidentally sends
-  // vTokens to a vToken contract, where it will not get recorded. Right now it would
+  // xTokens to a xToken contract, where it will not get recorded. Right now it would
   // be messy to include, so we are leaving it out for now TODO fix this in future
   let accountToID = event.params.to.toHex()
   if (accountToID != marketID) {
@@ -420,9 +423,9 @@ export function handleTransfer(event: Transfer): void {
       createAccount(accountToID)
     }
 
-    // Update vTokenStats common for all events, and return the stats to update unique
+    // Update xTokenStats common for all events, and return the stats to update unique
     // values for each event
-    let vTokenStatsTo = updateCommonVTokenStats(
+    let xTokenStatsTo = updateCommonXTokenStats(
       market.id,
       market.symbol,
       accountToID,
@@ -432,17 +435,17 @@ export function handleTransfer(event: Transfer): void {
       event.logIndex,
     )
 
-    vTokenStatsTo.vTokenBalance = vTokenStatsTo.vTokenBalance.plus(
+    xTokenStatsTo.xTokenBalance = xTokenStatsTo.xTokenBalance.plus(
       event.params.amount
         .toBigDecimal()
-        .div(vTokenDecimalsBD)
-        .truncate(vTokenDecimals),
+        .div(xTokenDecimalsBD)
+        .truncate(xTokenDecimals),
     )
 
-    vTokenStatsTo.totalUnderlyingSupplied = vTokenStatsTo.totalUnderlyingSupplied.plus(
+    xTokenStatsTo.totalUnderlyingSupplied = xTokenStatsTo.totalUnderlyingSupplied.plus(
       amountUnderylingTruncated,
     )
-    vTokenStatsTo.save()
+    xTokenStatsTo.save()
   }
 
   let transferID = event.transaction.hash
@@ -451,12 +454,12 @@ export function handleTransfer(event: Transfer): void {
     .concat(event.transactionLogIndex.toString())
 
   let transfer = new TransferEvent(transferID)
-  transfer.amount = event.params.amount.toBigDecimal().div(vTokenDecimalsBD)
+  transfer.amount = event.params.amount.toBigDecimal().div(xTokenDecimalsBD)
   transfer.to = event.params.to
   transfer.from = event.params.from
   transfer.blockNumber = event.block.number.toI32()
   transfer.blockTime = event.block.timestamp.toI32()
-  transfer.vTokenSymbol = market.symbol
+  transfer.xTokenSymbol = market.symbol
   transfer.save()
 }
 

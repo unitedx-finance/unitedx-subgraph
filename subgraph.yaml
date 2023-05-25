@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Comptroller
-    network: bsc
+    network: Milkomeda-C1-Devnet
     source:
-      address: "0xfd36e2c2a6789db23113685031d7f16329158384"
+      address: "0xE33D6934e2E1493Dd905f3E416AFf174EB7242d0"
       abi: Comptroller
-      startBlock: 2470000
+      startBlock: 12882181
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -22,14 +22,16 @@ dataSources:
       abis:
         - name: Comptroller
           file: ./abis/comptroller.json
-        - name: VToken
-          file: ./abis/vtoken.json
+        - name: XToken
+          file: ./abis/xtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
         - name: PriceOracle2
           file: ./abis/priceOracle2.json
-        - name: BEP20
-          file: ./abis/bep20.json
+        - name: ERC20
+          file: ./abis/erc20.json
+        - name: xERC20
+          file: ./abis/xERC20.json
       eventHandlers:
         - event: MarketListed(address)
           handler: handleMarketListed
@@ -46,31 +48,33 @@ dataSources:
         - event: NewPriceOracle(address,address)
           handler: handleNewPriceOracle
 templates:
-  - name: VToken
+  - name: xERC20
     kind: ethereum/contract
-    network: bsc
+    network: Milkomeda-C1-Devnet
     source:
-      abi: VToken
+      abi: xERC20
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
-      file: ./src/mappings/vtoken.ts
+      file: ./src/mappings/xtoken.ts
       entities:
         - User
         - Market
-        - VTokenInfo
+        - XTokenInfo
       abis:
-        - name: VToken
-          file: ./abis/vtoken.json
+        - name: XToken
+          file: ./abis/xtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
         - name: PriceOracle2
           file: ./abis/priceOracle2.json
-        - name: BEP20
-          file: ./abis/bep20.json
+        - name: ERC20
+          file: ./abis/erc20.json
         - name: Comptroller
           file: ./abis/Comptroller.json
+        - name: xERC20
+          file: ./abis/xERC20.json
       eventHandlers:
         - event: Mint(address,uint256,uint256)
           handler: handleMint
@@ -82,7 +86,7 @@ templates:
           handler: handleRepayBorrow
         - event: LiquidateBorrow(address,address,uint256,address,uint256)
           handler: handleLiquidateBorrow
-        - event: AccrueInterest(uint256,uint256,uint256)
+        - event: AccrueInterest(uint256,uint256,uint256,uint256)
           handler: handleAccrueInterest
         - event: NewReserveFactor(uint256,uint256)
           handler: handleNewReserveFactor
