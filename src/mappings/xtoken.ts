@@ -191,14 +191,6 @@ export function handleBorrow(event: Borrow): void {
   borrow.blockTime = event.block.timestamp.toI32()
   borrow.underlyingSymbol = market.underlyingSymbol
   borrow.save()
-
-  // if (
-  //   previousBorrow.equals(zeroBD) &&
-  //   !event.params.accountBorrows.toBigDecimal().equals(zeroBD) // checking edge case for borrwing 0
-  // ) {
-  //   market.numberOfBorrowers = market.numberOfBorrowers + 1
-  //   market.save()
-  // }
 }
 
 /* Repay some amount borrowed. Anyone can repay anyones balance

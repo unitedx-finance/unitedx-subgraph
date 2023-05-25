@@ -6,7 +6,7 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Comptroller
-    network: Milkomeda C1 Devnet
+    network: Milkomeda-C1-Devnet
     source:
       address: "0xE33D6934e2E1493Dd905f3E416AFf174EB7242d0"
       abi: Comptroller
@@ -50,7 +50,7 @@ dataSources:
 templates:
   - name: xERC20
     kind: ethereum/contract
-    network: Milkomeda C1 Devnet
+    network: Milkomeda-C1-Devnet
     source:
       abi: xERC20
     mapping:
