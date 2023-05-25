@@ -3,22 +3,22 @@
 // For each division by 10, add one to exponent to truncate one significant figure
 import { Address, BigDecimal, BigInt, Bytes, log } from '@graphprotocol/graph-ts'
 import { Market, Comptroller } from '../types/schema'
-import { PriceOracle2 } from '../types/templates/VToken/PriceOracle2'
-import { BEP20 } from '../types/templates/VToken/BEP20'
-import { VToken } from '../types/templates/VToken/VToken'
+import { PriceOracle2 } from '../types/templates/XErc20/PriceOracle2'
+import { ERC20 } from '../types/templates/XErc20/ERC20'
+import { xERC20 } from '../types/templates/XErc20/xErc20'
 
 import {
   exponentToBigDecimal,
   mantissaFactor,
   mantissaFactorBD,
-  vTokenDecimalsBD,
+  xTokenDecimalsBD,
   zeroBD,
 } from './helpers'
 
-let vUSDCAddress = '0xeca88125a5adbe82614ffc12d0db554e2e2867c8'
-let vBNBAddress = '0xa07c5b74c9b40447a954e1466938b865b6bbea36'
+let xUSDCAddress = '0xebc85c04124e55a682ef35d9f1c458ab1f5273b2'
+let xMADAAddress = '0x8126855f31b6a52ea5942f4f3bf8bf7c8c84f12d'
 
-// Used for all vBEP20 contracts
+// Used for all xERC20 contracts
 function getTokenPrice(
   blockNumber: i32,
   eventAddress: Address,
@@ -37,13 +37,14 @@ function getTokenPrice(
   let underlyingPrice: BigDecimal
 
   /* PriceOracle2 is used from starting of Comptroller.
-   * This must use the vToken address.
+   * This must use the xToken address.
    *
    * Note this returns the value without factoring in token decimals and wei, so we must divide
    * the number by (bnbDecimals - tokenDecimals) and again by the mantissa.
    */
   let mantissaDecimalFactor = 18 - underlyingDecimals + 18
   let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
+
   let oracle2 = PriceOracle2.bind(oracleAddress)
   underlyingPrice = oracle2
     .getUnderlyingPrice(eventAddress)
@@ -55,35 +56,37 @@ function getTokenPrice(
 
 export function createMarket(marketAddress: string): Market {
   let market: Market
-  let contract = VToken.bind(Address.fromString(marketAddress))
+  let contract = xERC20.bind(Address.fromString(marketAddress))
 
   log.debug('[createMarket] market address: {}', [marketAddress])
 
-  // It is vBNB, which has a slightly different interface
-  if (marketAddress == vBNBAddress) {
+  // It is xMADA, which has a slightly different interface
+  if (marketAddress == xMADAAddress) {
     market = new Market(marketAddress)
     market.underlyingAddress = Address.fromString(
       '0x0000000000000000000000000000000000000000',
     )
     market.underlyingDecimals = 18
     market.underlyingPrice = BigDecimal.fromString('1')
-    market.underlyingName = 'Binance Coin'
-    market.underlyingSymbol = 'BNB'
+    market.underlyingName = 'MilkAda'
+    market.underlyingSymbol = 'MADA'
     market.underlyingPriceUSD = zeroBD
-    // It is all other VBEP20 contracts
+    // It is all other xERC20 contracts
   } else {
     market = new Market(marketAddress)
     market.underlyingAddress = contract.underlying()
+
     log.debug('[createMarket] market underlying address: {}', [
       market.underlyingAddress.toHexString(),
     ])
-    let underlyingContract = BEP20.bind(Address.fromBytes(market.underlyingAddress))
+
+    let underlyingContract = ERC20.bind(Address.fromBytes(market.underlyingAddress))
     market.underlyingDecimals = underlyingContract.decimals()
     market.underlyingName = underlyingContract.name()
     market.underlyingSymbol = underlyingContract.symbol()
     market.underlyingPriceUSD = zeroBD
     market.underlyingPrice = zeroBD
-    if (marketAddress == vUSDCAddress) {
+    if (marketAddress == xUSDCAddress) {
       market.underlyingPriceUSD = BigDecimal.fromString('1')
     }
   }
@@ -118,14 +121,18 @@ function getBNBinUSD(blockNumber: i32): BigDecimal {
   if (!comptroller) {
     comptroller = new Comptroller('1')
   }
-  // log.debug('[getBNBinUSD] price oracle: {}', [comptroller.priceOracle.toHexString()]);
   let oracleAddress = Address.fromBytes(comptroller.priceOracle)
   let oracle = PriceOracle2.bind(oracleAddress)
-  let bnbPriceInUSD = oracle
-    .getUnderlyingPrice(Address.fromString(vBNBAddress))
-    .toBigDecimal()
-    .div(mantissaFactorBD)
-  return bnbPriceInUSD
+
+  let madaPriceUSD = zeroBD
+  let madaPrice = oracle.try_getUnderlyingPrice(Address.fromString(xMADAAddress))
+  if (madaPrice.reverted) {
+    log.error('***CALL FAILED*** : xERC20 getUnderlyingPrice() reverted', [])
+  } else {
+    madaPriceUSD = madaPrice.value.toBigDecimal().div(mantissaFactorBD)
+  }
+
+  return madaPriceUSD
 }
 
 export function updateMarket(
@@ -145,12 +152,11 @@ export function updateMarket(
   // Only updateMarket if it has not been updated this block
   if (market.accrualBlockNumber != blockNumber) {
     let contractAddress = Address.fromString(market.id)
-    let contract = VToken.bind(contractAddress)
-
+    let contract = xERC20.bind(contractAddress)
     let bnbPriceInUSD = getBNBinUSD(blockNumber)
 
-    // if vBNB, we only update USD price
-    if (market.id == vBNBAddress) {
+    // if xMADA, we only update USD price
+    if (market.id == xMADAAddress) {
       market.underlyingPriceUSD = bnbPriceInUSD.truncate(market.underlyingDecimals)
     } else {
       let tokenPriceUSD = getTokenPrice(
@@ -159,15 +165,18 @@ export function updateMarket(
         Address.fromBytes(market.underlyingAddress),
         market.underlyingDecimals,
       )
+
       if (bnbPriceInUSD.equals(BigDecimal.zero())) {
         market.underlyingPrice = BigDecimal.zero()
       } else {
         market.underlyingPrice = tokenPriceUSD
           .div(bnbPriceInUSD)
           .truncate(market.underlyingDecimals)
+
+        market.underlyingPriceUSD = tokenPriceUSD
       }
-      // if USDC, we only update BNB price
-      if (market.id != vUSDCAddress) {
+      // if USDC, we only update MADA price
+      if (market.id != xUSDCAddress) {
         market.underlyingPriceUSD = tokenPriceUSD.truncate(market.underlyingDecimals)
       }
     }
@@ -177,7 +186,7 @@ export function updateMarket(
     market.totalSupply = contract
       .totalSupply()
       .toBigDecimal()
-      .div(vTokenDecimalsBD)
+      .div(xTokenDecimalsBD)
 
     /* Exchange rate explanation
        In Practice
@@ -193,13 +202,13 @@ export function updateMarket(
     // So we handle it like this.
     let exchangeRateStored = contract.try_exchangeRateStored()
     if (exchangeRateStored.reverted) {
-      log.error('***CALL FAILED*** : vBEP20 supplyRatePerBlock() reverted', [])
+      log.error('***CALL FAILED*** : xERC20 supplyRatePerBlock() reverted', [])
       market.exchangeRate = zeroBD
     } else {
       market.exchangeRate = exchangeRateStored.value
         .toBigDecimal()
         .div(exponentToBigDecimal(market.underlyingDecimals))
-        .times(vTokenDecimalsBD)
+        .times(xTokenDecimalsBD)
         .div(mantissaFactorBD)
         .truncate(mantissaFactor)
     }
@@ -228,7 +237,7 @@ export function updateMarket(
     // Must convert to BigDecimal, and remove 10^18 that is used for Exp in Venus Solidity
     let borrowRatePerBlock = contract.try_borrowRatePerBlock()
     if (borrowRatePerBlock.reverted) {
-      log.error('***CALL FAILED*** : vBEP20 supplyRatePerBlock() reverted', [])
+      log.error('***CALL FAILED*** : xERC20 supplyRatePerBlock() reverted', [])
       market.exchangeRate = zeroBD
     } else {
       market.borrowRate = borrowRatePerBlock.value
@@ -241,7 +250,7 @@ export function updateMarket(
     // So we handle it like this.
     let supplyRatePerBlock = contract.try_supplyRatePerBlock()
     if (supplyRatePerBlock.reverted) {
-      log.info('***CALL FAILED*** : vBEP20 supplyRatePerBlock() reverted', [])
+      log.info('***CALL FAILED*** : xERC20 supplyRatePerBlock() reverted', [])
       market.supplyRate = zeroBD
     } else {
       market.supplyRate = supplyRatePerBlock.value

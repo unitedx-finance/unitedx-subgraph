@@ -9,36 +9,45 @@ import {
   NewPriceOracle,
   MarketListed,
 } from '../types/Comptroller/Comptroller'
-import { log } from '@graphprotocol/graph-ts'
+import { log, Address } from '@graphprotocol/graph-ts'
 
-
-import { VToken } from '../types/templates'
+import { xERC20 } from '../types/templates'
 import { Market, Comptroller, Account } from '../types/schema'
-import { mantissaFactorBD, updateCommonVTokenStats, createAccount, ensureComptrollerSynced } from './helpers'
+import {
+  mantissaFactorBD,
+  updateCommonXTokenStats,
+  createAccount,
+  ensureComptrollerSynced,
+} from './helpers'
 import { createMarket } from './markets'
 
 export function handleMarketListed(event: MarketListed): void {
+  log.debug('BEFORE: {}', [event.params.cToken.toHexString()])
   // Dynamically index all new listed tokens
-  VToken.create(event.params.vToken)
+  xERC20.create(event.params.cToken)
+  log.debug('AFTER: {}', [event.params.cToken.toHexString()])
+  // XToken.create(event.params.cToken)
   // Create the market for this token, since it's now been listed.
-  let market = createMarket(event.params.vToken.toHexString())
+  let market = createMarket(event.params.cToken.toHexString())
   market.save()
 }
 
 export function handleMarketEntered(event: MarketEntered): void {
-  let market = Market.load(event.params.vToken.toHexString())
+  let market = Market.load(event.params.cToken.toHexString())
   // Null check needed to avoid crashing on a new market added. Ideally when dynamic data
   // sources can source from the contract creation block and not the time the
   // comptroller adds the market, we can avoid this altogether
   if (!market) {
-    log.debug('[handleMarketEntered] market null: {}', [event.params.vToken.toHexString()]);
-    ensureComptrollerSynced(event.block.number.toI32(), event.block.timestamp.toI32());
-    market = Market.load(event.params.vToken.toHexString());
+    log.debug('[handleMarketEntered] market null: {}', [
+      event.params.cToken.toHexString(),
+    ])
+    ensureComptrollerSynced(event.block.number.toI32(), event.block.timestamp.toI32())
+    market = Market.load(event.params.cToken.toHexString())
   }
 
   if (!market) {
-    log.debug('[handleMarketEntered] market still null, return...', []);
-    return;
+    log.debug('[handleMarketEntered] market still null, return...', [])
+    return
   }
 
   let accountID = event.params.account.toHex()
@@ -47,7 +56,7 @@ export function handleMarketEntered(event: MarketEntered): void {
     createAccount(accountID)
   }
 
-  let vTokenStats = updateCommonVTokenStats(
+  let cTokenStats = updateCommonXTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -56,24 +65,24 @@ export function handleMarketEntered(event: MarketEntered): void {
     event.block.number,
     event.logIndex,
   )
-  vTokenStats.enteredMarket = true
-  vTokenStats.save()
+  cTokenStats.enteredMarket = true
+  cTokenStats.save()
 }
 
 export function handleMarketExited(event: MarketExited): void {
-  let market = Market.load(event.params.vToken.toHexString())
+  let market = Market.load(event.params.cToken.toHexString())
   // Null check needed to avoid crashing on a new market added. Ideally when dynamic data
   // sources can source from the contract creation block and not the time the
   // comptroller adds the market, we can avoid this altogether
   if (!market) {
-    log.debug('[handleMarketExited] market null: {}', [event.params.vToken.toHexString()]);
-    ensureComptrollerSynced(event.block.number.toI32(), event.block.timestamp.toI32());
-    market = Market.load(event.params.vToken.toHexString());
+    log.debug('[handleMarketExited] market null: {}', [event.params.cToken.toHexString()])
+    ensureComptrollerSynced(event.block.number.toI32(), event.block.timestamp.toI32())
+    market = Market.load(event.params.cToken.toHexString())
   }
 
   if (!market) {
-    log.debug('[handleMarketExited] market still null, return...', []);
-    return;
+    log.debug('[handleMarketExited] market still null, return...', [])
+    return
   }
 
   let accountID = event.params.account.toHex()
@@ -82,7 +91,7 @@ export function handleMarketExited(event: MarketExited): void {
     createAccount(accountID)
   }
 
-  let vTokenStats = updateCommonVTokenStats(
+  let cTokenStats = updateCommonXTokenStats(
     market.id,
     market.symbol,
     accountID,
@@ -91,8 +100,8 @@ export function handleMarketExited(event: MarketExited): void {
     event.block.number,
     event.logIndex,
   )
-  vTokenStats.enteredMarket = false
-  vTokenStats.save()
+  cTokenStats.enteredMarket = false
+  cTokenStats.save()
 }
 
 export function handleNewCloseFactor(event: NewCloseFactor): void {
@@ -105,7 +114,7 @@ export function handleNewCloseFactor(event: NewCloseFactor): void {
 }
 
 export function handleNewCollateralFactor(event: NewCollateralFactor): void {
-  let market = Market.load(event.params.vToken.toHexString())
+  let market = Market.load(event.params.cToken.toHexString())
   // Null check needed to avoid crashing on a new market added. Ideally when dynamic data
   // sources can source from the contract creation block and not the time the
   // comptroller adds the market, we can avoid this altogether

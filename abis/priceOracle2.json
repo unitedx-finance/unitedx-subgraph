@@ -1,146 +1,201 @@
 [
   {
-    "constant": true,
-    "inputs": [],
-    "name": "vBnbAddress",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "comptroller",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "isPriceOracle",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "makerUsdOracleKey",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "vDaiAddress",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
     "inputs": [
       {
-        "name": "vToken",
+        "internalType": "contract A3WrapperInterface",
+        "name": "_oracle",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldAdmin",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "NewAdmin",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "cToken",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "source",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "NewAggregator",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldPendingAdmin",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newPendingAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "NewPendingAdmin",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "acceptAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "aggregators",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "source",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract CToken",
+        "name": "cToken",
         "type": "address"
       }
     ],
     "name": "getUnderlyingPrice",
     "outputs": [
       {
+        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [],
-    "name": "v1PriceOracle",
+    "name": "isPriceOracle",
     "outputs": [
       {
+        "internalType": "bool",
         "name": "",
-        "type": "address"
+        "type": "bool"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [],
-    "name": "vUsdcAddress",
+    "name": "pendingAdmin",
     "outputs": [
       {
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "name": "comptroller_",
-        "type": "address"
+        "internalType": "contract CToken[]",
+        "name": "_ctokenAddresses",
+        "type": "address[]"
       },
       {
-        "name": "v1PriceOracle_",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "_sources",
+        "type": "address[]"
       },
       {
-        "name": "vBnbAddress_",
-        "type": "address"
-      },
+        "internalType": "bytes[]",
+        "name": "_datas",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "setAggregators",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
-        "name": "vUsdcAddress_",
-        "type": "address"
-      },
-      {
-        "name": "vDaiAddress_",
+        "internalType": "address",
+        "name": "newPendingAdmin",
         "type": "address"
       }
     ],
-    "payable": false,
+    "name": "setPendingAdmin",
+    "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "constructor"
+    "type": "function"
   }
 ]

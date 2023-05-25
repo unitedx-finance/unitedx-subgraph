@@ -402,7 +402,7 @@ export class Account extends Entity {
   }
 }
 
-export class AccountVToken extends Entity {
+export class AccountXToken extends Entity {
   constructor(id: string) {
     super()
     this.set('id', Value.fromString(id))
@@ -412,7 +412,7 @@ export class AccountVToken extends Entity {
     this.set('account', Value.fromString(''))
     this.set('accrualBlockNumber', Value.fromBigInt(BigInt.zero()))
     this.set('enteredMarket', Value.fromBoolean(false))
-    this.set('vTokenBalance', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('xTokenBalance', Value.fromBigDecimal(BigDecimal.zero()))
     this.set('totalUnderlyingSupplied', Value.fromBigDecimal(BigDecimal.zero()))
     this.set('totalUnderlyingRedeemed', Value.fromBigDecimal(BigDecimal.zero()))
     this.set('accountBorrowIndex', Value.fromBigDecimal(BigDecimal.zero()))
@@ -423,19 +423,19 @@ export class AccountVToken extends Entity {
 
   save(): void {
     let id = this.get('id')
-    assert(id != null, 'Cannot save AccountVToken entity without an ID')
+    assert(id != null, 'Cannot save AccountXToken entity without an ID')
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        'Cannot save AccountVToken entity with non-string ID. ' +
+        'Cannot save AccountXToken entity with non-string ID. ' +
           'Considering using .toHex() to convert the "id" to a string.',
       )
-      store.set('AccountVToken', id.toString(), this)
+      store.set('AccountXToken', id.toString(), this)
     }
   }
 
-  static load(id: string): AccountVToken | null {
-    return changetype<AccountVToken | null>(store.get('AccountVToken', id))
+  static load(id: string): AccountXToken | null {
+    return changetype<AccountXToken | null>(store.get('AccountXToken', id))
   }
 
   get id(): string {
@@ -501,13 +501,13 @@ export class AccountVToken extends Entity {
     this.set('enteredMarket', Value.fromBoolean(value))
   }
 
-  get vTokenBalance(): BigDecimal {
-    let value = this.get('vTokenBalance')
+  get xTokenBalance(): BigDecimal {
+    let value = this.get('xTokenBalance')
     return value!.toBigDecimal()
   }
 
-  set vTokenBalance(value: BigDecimal) {
-    this.set('vTokenBalance', Value.fromBigDecimal(value))
+  set xTokenBalance(value: BigDecimal) {
+    this.set('xTokenBalance', Value.fromBigDecimal(value))
   }
 
   get totalUnderlyingSupplied(): BigDecimal {
@@ -565,7 +565,7 @@ export class AccountVToken extends Entity {
   }
 }
 
-export class AccountVTokenTransaction extends Entity {
+export class AccountXTokenTransaction extends Entity {
   constructor(id: string) {
     super()
     this.set('id', Value.fromString(id))
@@ -579,20 +579,20 @@ export class AccountVTokenTransaction extends Entity {
 
   save(): void {
     let id = this.get('id')
-    assert(id != null, 'Cannot save AccountVTokenTransaction entity without an ID')
+    assert(id != null, 'Cannot save AccountXTokenTransaction entity without an ID')
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        'Cannot save AccountVTokenTransaction entity with non-string ID. ' +
+        'Cannot save AccountXTokenTransaction entity with non-string ID. ' +
           'Considering using .toHex() to convert the "id" to a string.',
       )
-      store.set('AccountVTokenTransaction', id.toString(), this)
+      store.set('AccountXTokenTransaction', id.toString(), this)
     }
   }
 
-  static load(id: string): AccountVTokenTransaction | null {
-    return changetype<AccountVTokenTransaction | null>(
-      store.get('AccountVTokenTransaction', id),
+  static load(id: string): AccountXTokenTransaction | null {
+    return changetype<AccountXTokenTransaction | null>(
+      store.get('AccountXTokenTransaction', id),
     )
   }
 
@@ -661,7 +661,7 @@ export class TransferEvent extends Entity {
     this.set('from', Value.fromBytes(Bytes.empty()))
     this.set('blockNumber', Value.fromI32(0))
     this.set('blockTime', Value.fromI32(0))
-    this.set('vTokenSymbol', Value.fromString(''))
+    this.set('xTokenSymbol', Value.fromString(''))
   }
 
   save(): void {
@@ -735,13 +735,13 @@ export class TransferEvent extends Entity {
     this.set('blockTime', Value.fromI32(value))
   }
 
-  get vTokenSymbol(): string {
-    let value = this.get('vTokenSymbol')
+  get xTokenSymbol(): string {
+    let value = this.get('xTokenSymbol')
     return value!.toString()
   }
 
-  set vTokenSymbol(value: string) {
-    this.set('vTokenSymbol', Value.fromString(value))
+  set xTokenSymbol(value: string) {
+    this.set('xTokenSymbol', Value.fromString(value))
   }
 }
 
@@ -755,7 +755,7 @@ export class MintEvent extends Entity {
     this.set('from', Value.fromBytes(Bytes.empty()))
     this.set('blockNumber', Value.fromI32(0))
     this.set('blockTime', Value.fromI32(0))
-    this.set('vTokenSymbol', Value.fromString(''))
+    this.set('xTokenSymbol', Value.fromString(''))
   }
 
   save(): void {
@@ -829,13 +829,13 @@ export class MintEvent extends Entity {
     this.set('blockTime', Value.fromI32(value))
   }
 
-  get vTokenSymbol(): string {
-    let value = this.get('vTokenSymbol')
+  get xTokenSymbol(): string {
+    let value = this.get('xTokenSymbol')
     return value!.toString()
   }
 
-  set vTokenSymbol(value: string) {
-    this.set('vTokenSymbol', Value.fromString(value))
+  set xTokenSymbol(value: string) {
+    this.set('xTokenSymbol', Value.fromString(value))
   }
 
   get underlyingAmount(): BigDecimal | null {
@@ -866,7 +866,7 @@ export class RedeemEvent extends Entity {
     this.set('from', Value.fromBytes(Bytes.empty()))
     this.set('blockNumber', Value.fromI32(0))
     this.set('blockTime', Value.fromI32(0))
-    this.set('vTokenSymbol', Value.fromString(''))
+    this.set('xTokenSymbol', Value.fromString(''))
   }
 
   save(): void {
@@ -940,13 +940,13 @@ export class RedeemEvent extends Entity {
     this.set('blockTime', Value.fromI32(value))
   }
 
-  get vTokenSymbol(): string {
-    let value = this.get('vTokenSymbol')
+  get xTokenSymbol(): string {
+    let value = this.get('xTokenSymbol')
     return value!.toString()
   }
 
-  set vTokenSymbol(value: string) {
-    this.set('vTokenSymbol', Value.fromString(value))
+  set xTokenSymbol(value: string) {
+    this.set('xTokenSymbol', Value.fromString(value))
   }
 
   get underlyingAmount(): BigDecimal | null {
@@ -977,7 +977,7 @@ export class LiquidationEvent extends Entity {
     this.set('from', Value.fromBytes(Bytes.empty()))
     this.set('blockNumber', Value.fromI32(0))
     this.set('blockTime', Value.fromI32(0))
-    this.set('vTokenSymbol', Value.fromString(''))
+    this.set('xTokenSymbol', Value.fromString(''))
     this.set('underlyingSymbol', Value.fromString(''))
     this.set('underlyingRepayAmount', Value.fromBigDecimal(BigDecimal.zero()))
   }
@@ -1053,13 +1053,13 @@ export class LiquidationEvent extends Entity {
     this.set('blockTime', Value.fromI32(value))
   }
 
-  get vTokenSymbol(): string {
-    let value = this.get('vTokenSymbol')
+  get xTokenSymbol(): string {
+    let value = this.get('xTokenSymbol')
     return value!.toString()
   }
 
-  set vTokenSymbol(value: string) {
-    this.set('vTokenSymbol', Value.fromString(value))
+  set xTokenSymbol(value: string) {
+    this.set('xTokenSymbol', Value.fromString(value))
   }
 
   get underlyingSymbol(): string {

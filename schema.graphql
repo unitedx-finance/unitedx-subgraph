@@ -15,33 +15,33 @@ type Comptroller @entity {
 }
 
 """
-Market stores all high level variables for a vToken market
+Market stores all high level variables for a xToken market
 """
 type Market @entity {
     #Fields that match Venus API
     "Borrow rate per block"
     borrowRate: BigDecimal!
-    "The vToken contract balance of BEP20 or BNB"
+    "The xToken contract balance of BEP20 or BNB"
     cash: BigDecimal!
     "Collateral factor determining how much one can borrow"
     collateralFactor: BigDecimal!
-    "Exchange rate of tokens / vTokens"
+    "Exchange rate of tokens / xTokens"
     exchangeRate:  BigDecimal!
     "Address of the interest rate model"
     interestRateModelAddress: Bytes!
-    "Name of the vToken"
+    "Name of the xToken"
     name: String!
     "Reserves stored in the contract"
     reserves: BigDecimal!
     "Supply rate per block"
     supplyRate: BigDecimal!
-    "VToken symbol"
+    "XToken symbol"
     symbol: String!
-    "VToken address"
+    "XToken address"
     id: ID!
     "Borrows in the market"
     totalBorrows: BigDecimal!
-    "VToken supply. VTokens have 8 decimals"
+    "XToken supply. XTokens have 8 decimals"
     totalSupply: BigDecimal!
     "Underlying token address"
     underlyingAddress: Bytes!
@@ -68,14 +68,14 @@ type Market @entity {
 }
 
 """
-Account is an BNB address, with a list of all vToken markets the account has
+Account is an MADA address, with a list of all xToken markets the account has
 participated in, along with liquidation information.
 """
 type Account @entity {
     "User BNB address"
     id: ID!
-    "Array of VTokens user is in"
-    tokens: [AccountVToken!]! @derivedFrom(field: "account")
+    "Array of XTokens user is in"
+    tokens: [AccountXToken!]! @derivedFrom(field: "account")
     "Count user has been liquidated"
     countLiquidated: Int!
     "Count user has liquidated others"
@@ -96,27 +96,27 @@ type Account @entity {
 }
 
 """
-AccountVToken is a single account within a single vToken market, with data such
+AccountXToken is a single account within a single xToken market, with data such
 as interest earned or paid
 """
-type AccountVToken @entity {
-    "Concatenation of VToken address and user address"
+type AccountXToken @entity {
+    "Concatenation of XToken address and user address"
     id: ID!
     "Relation to market"
     market: Market!
-    "Symbol of the vToken"
+    "Symbol of the xToken"
     symbol: String!
     "Relation to user"
     account: Account!
     "Transactions data"
-    transactions: [AccountVTokenTransaction!]! @derivedFrom(field:"account")
+    transactions: [AccountXTokenTransaction!]! @derivedFrom(field:"account")
     "Block number this asset was updated at in the contract"
     accrualBlockNumber: BigInt!
     "True if user is entered, false if they are exited"
     enteredMarket: Boolean!
 
-    "VToken balance of the user"
-    vTokenBalance: BigDecimal!
+    "XToken balance of the user"
+    xTokenBalance: BigDecimal!
     "Total amount of underlying supplied"
     totalUnderlyingSupplied: BigDecimal!
     "Total amount of underling redeemed"
@@ -135,7 +135,7 @@ type AccountVToken @entity {
     # They do not need to be in the schema, but they will show up in the explorer playground
 
     # supplyBalanceUnderlying: BigDecimal!
-    # FORMULA: supplyBalanceUnderlying = vTokenBalance * market.exchangeRate
+    # FORMULA: supplyBalanceUnderlying = xTokenBalance * market.exchangeRate
 
     # lifetimeSupplyInterestAccrued: BigDecimal!
     # FORMULA: lifetimeSupplyInterestAccrued = supplyBalanceUnderlying - totalUnderlyingSupplied + totalUnderlyingRedeemed
@@ -148,12 +148,12 @@ type AccountVToken @entity {
 }
 
 """
-Auxiliary entity for AccountVToken
+Auxiliary entity for AccountXToken
 """
-type AccountVTokenTransaction @entity {
+type AccountXTokenTransaction @entity {
   id: ID!
 
-  account: AccountVToken!
+  account: AccountXToken!
 
   tx_hash: Bytes!
 
@@ -165,13 +165,13 @@ type AccountVTokenTransaction @entity {
 }
 
 """
-An interface for a transfer of any vToken. TransferEvent, MintEvent,
+An interface for a transfer of any xToken. TransferEvent, MintEvent,
 RedeemEvent, and LiquidationEvent all use this interface
 """
-interface VTokenTransfer {
+interface XTokenTransfer {
     "Transaction hash concatenated with log index"
     id: ID!
-    "vTokens transferred"
+    "xTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -181,18 +181,18 @@ interface VTokenTransfer {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the vToken transferred"
-    vTokenSymbol: String!
+    "Symbol of the xToken transferred"
+    xTokenSymbol: String!
 }
 
 """
 TransferEvent will be stored for every mint, redeem, liquidation, and any normal
 transfer between two accounts.
 """
-type TransferEvent implements VTokenTransfer @entity {
+type TransferEvent implements XTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "vTokens transferred"
+    "xTokens transferred"
     amount: BigDecimal!
     "Account that received tokens"
     to: Bytes!
@@ -202,43 +202,43 @@ type TransferEvent implements VTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the vToken transferred"
-    vTokenSymbol: String!
+    "Symbol of the xToken transferred"
+    xTokenSymbol: String!
 }
 
 """
-MintEvent stores information for mints. From address will always be a vToken
+MintEvent stores information for mints. From address will always be a xToken
 market address
 """
-type MintEvent implements VTokenTransfer @entity {
+type MintEvent implements XTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "vTokens transferred"
+    "xTokens transferred"
     amount: BigDecimal!
     "Account that received tokens (minter)"
     to: Bytes!
-    "Account that sent tokens (VToken contract)"
+    "Account that sent tokens (XToken contract)"
     from: Bytes!
     "Block number"
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the vToken transferred"
-    vTokenSymbol: String!
+    "Symbol of the xToken transferred"
+    xTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 RedeemEvent stores information for redeems. To address will always be a
-vToken market address
+xToken market address
 """
-type RedeemEvent implements VTokenTransfer @entity {
+type RedeemEvent implements XTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "vTokens transferred"
+    "xTokens transferred"
     amount: BigDecimal!
-    "Account that received tokens (VToken contract)"
+    "Account that received tokens (XToken contract)"
     to: Bytes!
     "Account that sent tokens (redeemer)"
     from: Bytes!
@@ -246,20 +246,20 @@ type RedeemEvent implements VTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "Symbol of the vToken transferred"
-    vTokenSymbol: String!
+    "Symbol of the xToken transferred"
+    xTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
 }
 
 """
 LiquidationEvent stores information for liquidations. The event is emitted from
-the vToken market address.
+the xToken market address.
 """
-type LiquidationEvent implements VTokenTransfer @entity {
+type LiquidationEvent implements XTokenTransfer @entity {
     "Transaction hash concatenated with log index"
     id: ID!
-    "vTokens seized"
+    "xTokens seized"
     amount: BigDecimal!
     "Liquidator receiving tokens"
     to: Bytes!
@@ -269,11 +269,11 @@ type LiquidationEvent implements VTokenTransfer @entity {
     blockNumber: Int!
     "Block time"
     blockTime: Int!
-    "vToken that was sezied as collateral"
-    vTokenSymbol: String!
+    "xToken that was sezied as collateral"
+    xTokenSymbol: String!
     "Symbol of the underlying asset repaid through liquidation"
     underlyingSymbol: String!
-    "Underlying vToken amount that was repaid by liquidator"
+    "Underlying xToken amount that was repaid by liquidator"
     underlyingRepayAmount: BigDecimal!
 }
 

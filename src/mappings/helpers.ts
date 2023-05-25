@@ -3,16 +3,16 @@
 // For each division by 10, add one to exponent to truncate one significant figure
 import { BigDecimal, BigInt, Bytes, Address, log } from '@graphprotocol/graph-ts'
 import {
-  AccountVToken,
+  AccountXToken,
   Account,
-  AccountVTokenTransaction,
+  AccountXTokenTransaction,
   Comptroller,
   Market,
 } from '../types/schema'
 import { Comptroller as ComptrollerContract } from '../types/Comptroller/Comptroller'
 import { updateMarket } from './markets'
-import { VToken } from '../types/templates'
-import { BEP20 } from '../types/templates/VToken/BEP20'
+import { xERC20 } from '../types/templates'
+import { ERC20 } from '../types/templates/XErc20/ERC20'
 
 const comptrollerAddress = Address.fromString(
   '0xfd36e2c2a6789db23113685031d7f16329158384',
@@ -27,38 +27,38 @@ export function exponentToBigDecimal(decimals: i32): BigDecimal {
 }
 
 export let mantissaFactor = 18
-export let vTokenDecimals = 8
+export let xTokenDecimals = 8
 export let mantissaFactorBD: BigDecimal = exponentToBigDecimal(18)
-export let vTokenDecimalsBD: BigDecimal = exponentToBigDecimal(8)
+export let xTokenDecimalsBD: BigDecimal = exponentToBigDecimal(8)
 export let zeroBD = BigDecimal.fromString('0')
 
-export function createAccountVToken(
-  vTokenStatsID: string,
+export function createAccountXToken(
+  xTokenStatsID: string,
   symbol: string,
   account: string,
   marketID: string,
-): AccountVToken {
-  let vTokenStats = new AccountVToken(vTokenStatsID)
-  vTokenStats.symbol = symbol
-  vTokenStats.market = marketID
-  vTokenStats.account = account
-  vTokenStats.accrualBlockNumber = BigInt.fromI32(0)
+): AccountXToken {
+  let xTokenStats = new AccountXToken(xTokenStatsID)
+  xTokenStats.symbol = symbol
+  xTokenStats.market = marketID
+  xTokenStats.account = account
+  xTokenStats.accrualBlockNumber = BigInt.fromI32(0)
   // we need to set an initial real onchain value to this otherwise it will never
   // be accurate
-  const vTokenContract = BEP20.bind(Address.fromString(marketID))
-  vTokenStats.vTokenBalance = new BigDecimal(
-    vTokenContract.balanceOf(Address.fromString(account)),
+  const xTokenContract = ERC20.bind(Address.fromString(marketID))
+  xTokenStats.xTokenBalance = new BigDecimal(
+    xTokenContract.balanceOf(Address.fromString(account)),
   )
-  // log.debug('[createAccountVToken] vTokenBalance: {}, account: {}, vToken: {}', [vTokenStats.vTokenBalance.toString(), account, marketID]);
+  // log.debug('[createAccountXToken] xTokenBalance: {}, account: {}, xToken: {}', [xTokenStats.xTokenBalance.toString(), account, marketID]);
 
-  vTokenStats.totalUnderlyingSupplied = zeroBD
-  vTokenStats.totalUnderlyingRedeemed = zeroBD
-  vTokenStats.accountBorrowIndex = zeroBD
-  vTokenStats.totalUnderlyingBorrowed = zeroBD
-  vTokenStats.totalUnderlyingRepaid = zeroBD
-  vTokenStats.storedBorrowBalance = zeroBD
-  vTokenStats.enteredMarket = false
-  return vTokenStats
+  xTokenStats.totalUnderlyingSupplied = zeroBD
+  xTokenStats.totalUnderlyingRedeemed = zeroBD
+  xTokenStats.accountBorrowIndex = zeroBD
+  xTokenStats.totalUnderlyingBorrowed = zeroBD
+  xTokenStats.totalUnderlyingRepaid = zeroBD
+  xTokenStats.storedBorrowBalance = zeroBD
+  xTokenStats.enteredMarket = false
+  return xTokenStats
 }
 
 export function createAccount(accountID: string): Account {
@@ -70,7 +70,7 @@ export function createAccount(accountID: string): Account {
   return account
 }
 
-export function updateCommonVTokenStats(
+export function updateCommonXTokenStats(
   marketID: string,
   marketSymbol: string,
   accountID: string,
@@ -78,39 +78,39 @@ export function updateCommonVTokenStats(
   timestamp: BigInt,
   blockNumber: BigInt,
   logIndex: BigInt,
-): AccountVToken {
-  let vTokenStatsID = marketID.concat('-').concat(accountID)
-  let vTokenStats = AccountVToken.load(vTokenStatsID)
-  if (vTokenStats == null) {
-    vTokenStats = createAccountVToken(vTokenStatsID, marketSymbol, accountID, marketID)
+): AccountXToken {
+  let xTokenStatsID = marketID.concat('-').concat(accountID)
+  let xTokenStats = AccountXToken.load(xTokenStatsID)
+  if (xTokenStats == null) {
+    xTokenStats = createAccountXToken(xTokenStatsID, marketSymbol, accountID, marketID)
   }
-  getOrCreateAccountVTokenTransaction(
-    vTokenStatsID,
+  getOrCreateAccountXTokenTransaction(
+    xTokenStatsID,
     tx_hash,
     timestamp,
     blockNumber,
     logIndex,
   )
-  vTokenStats.accrualBlockNumber = blockNumber
-  return vTokenStats as AccountVToken
+  xTokenStats.accrualBlockNumber = blockNumber
+  return xTokenStats as AccountXToken
 }
 
-export function getOrCreateAccountVTokenTransaction(
+export function getOrCreateAccountXTokenTransaction(
   accountID: string,
   tx_hash: Bytes,
   timestamp: BigInt,
   block: BigInt,
   logIndex: BigInt,
-): AccountVTokenTransaction {
+): AccountXTokenTransaction {
   let id = accountID
     .concat('-')
     .concat(tx_hash.toHexString())
     .concat('-')
     .concat(logIndex.toString())
-  let transaction = AccountVTokenTransaction.load(id)
+  let transaction = AccountXTokenTransaction.load(id)
 
   if (transaction == null) {
-    transaction = new AccountVTokenTransaction(id)
+    transaction = new AccountXTokenTransaction(id)
     transaction.account = accountID
     transaction.tx_hash = tx_hash
     transaction.timestamp = timestamp
@@ -119,7 +119,7 @@ export function getOrCreateAccountVTokenTransaction(
     transaction.save()
   }
 
-  return transaction as AccountVTokenTransaction
+  return transaction as AccountXTokenTransaction
 }
 
 export function ensureComptrollerSynced(
@@ -163,7 +163,7 @@ export function ensureComptrollerSynced(
 
   for (let i = 0; i < allMarkets.length; i++) {
     updateMarket(allMarkets[i], blockNumber, blockTimestamp)
-    VToken.create(allMarkets[i])
+    xERC20.create(allMarkets[i])
   }
 
   return comptroller
