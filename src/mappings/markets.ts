@@ -205,12 +205,7 @@ export function updateMarket(
       log.error('***CALL FAILED*** : xERC20 supplyRatePerBlock() reverted', [])
       market.exchangeRate = zeroBD
     } else {
-      market.exchangeRate = exchangeRateStored.value
-        .toBigDecimal()
-        .div(exponentToBigDecimal(market.underlyingDecimals))
-        .times(xTokenDecimalsBD)
-        .div(mantissaFactorBD)
-        .truncate(mantissaFactor)
+      market.exchangeRate = exchangeRateStored.value.toBigDecimal()
     }
     market.borrowIndex = contract
       .borrowIndex()
