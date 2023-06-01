@@ -172,8 +172,6 @@ export function updateMarket(
         market.underlyingPrice = tokenPriceUSD
           .div(bnbPriceInUSD)
           .truncate(market.underlyingDecimals)
-
-        market.underlyingPriceUSD = tokenPriceUSD
       }
       // if USDC, we only update MADA price
       if (market.id != xUSDCAddress) {
@@ -206,6 +204,10 @@ export function updateMarket(
       log.error('***CALL FAILED*** : xERC20 supplyRatePerBlock() reverted', [])
       market.exchangeRate = zeroBD
     } else {
+      log.info('EXX: {} {}', [
+        market.id,
+        exchangeRateStored.value.toBigDecimal().toString(),
+      ])
       market.exchangeRate = exchangeRateStored.value.toBigDecimal()
     }
     market.borrowIndex = contract
