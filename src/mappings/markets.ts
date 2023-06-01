@@ -183,10 +183,11 @@ export function updateMarket(
 
     market.accrualBlockNumber = contract.accrualBlockNumber().toI32()
     market.blockTimestamp = blockTimestamp
+
     market.totalSupply = contract
       .totalSupply()
       .toBigDecimal()
-      .div(xTokenDecimalsBD)
+      .div(exponentToBigDecimal(contract.decimals()))
 
     /* Exchange rate explanation
        In Practice
