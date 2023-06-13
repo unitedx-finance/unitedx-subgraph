@@ -227,6 +227,12 @@ type MintEvent implements XTokenTransfer @entity {
     xTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
+    supplyRatePerBlock: BigDecimal!
+    borrowRatePerBlock: BigDecimal!
+    exchangeRate: BigDecimal!
+    priceUSD: BigDecimal!
+    totalBorrow: BigDecimal!
+    totalSupply: BigDecimal!
 }
 
 """

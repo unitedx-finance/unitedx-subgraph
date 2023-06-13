@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
-import { Address } from '@graphprotocol/graph-ts'
+import { Address, log } from '@graphprotocol/graph-ts'
 import {
   Mint,
   Redeem,
@@ -10,6 +10,7 @@ import {
   AccrueInterest,
   NewReserveFactor,
   NewMarketInterestRateModel,
+  XToken,
 } from '../types/templates/XErc20/XToken'
 import {
   Market,
@@ -20,8 +21,9 @@ import {
   TransferEvent,
   BorrowEvent,
   RepayEvent,
+  Comptroller,
 } from '../types/schema'
-
+import { PriceOracle2 } from '../types/templates/XErc20/PriceOracle2'
 import { createMarket, updateMarket } from './markets'
 import {
   createAccount,
@@ -30,7 +32,11 @@ import {
   xTokenDecimalsBD,
   xTokenDecimals,
   zeroBD,
+  mantissaFactor,
+  mantissaFactorBD,
 } from './helpers'
+
+let xMADAAddress = '0x8126855f31b6a52ea5942f4f3bf8bf7c8c84f12d'
 
 /* Account supplies assets into market and receives xTokens in exchange
  *
@@ -72,6 +78,57 @@ export function handleMint(event: Mint): void {
   mint.blockTime = event.block.timestamp.toI32()
   mint.xTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
+
+  const xToken = XToken.bind(Address.fromBytes(event.address))
+  let supplyRatePerBlock = xToken.try_supplyRatePerBlock()
+  mint.supplyRatePerBlock = supplyRatePerBlock.reverted
+    ? zeroBD
+    : supplyRatePerBlock.value.toBigDecimal()
+
+  let borrowRatePerBlock = xToken.try_borrowRatePerBlock()
+  mint.borrowRatePerBlock = borrowRatePerBlock.reverted
+    ? zeroBD
+    : borrowRatePerBlock.value.toBigDecimal()
+
+  let exchangeRateStored = xToken.try_exchangeRateStored()
+  mint.exchangeRate = exchangeRateStored.reverted
+    ? zeroBD
+    : exchangeRateStored.value.toBigDecimal()
+
+  let totalSupply = xToken.try_totalSupply()
+  mint.totalSupply = totalSupply.reverted
+    ? zeroBD
+    : totalSupply.value.toBigDecimal().div(exponentToBigDecimal(xToken.decimals()))
+
+  let totalBorrow = xToken.try_totalBorrows()
+  mint.totalBorrow = totalBorrow.reverted
+    ? zeroBD
+    : totalBorrow.value
+        .toBigDecimal()
+        .div(exponentToBigDecimal(market.underlyingDecimals))
+        .truncate(market.underlyingDecimals)
+
+  let comptroller = Comptroller.load('1')
+  if (!comptroller) {
+    comptroller = new Comptroller('1')
+  }
+
+  let oracleAddress = Address.fromBytes(comptroller.priceOracle)
+  let oracle = PriceOracle2.bind(oracleAddress)
+
+  if (market.id == xMADAAddress) {
+    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
+    mint.priceUSD = price.reverted
+      ? zeroBD
+      : price.value.toBigDecimal().div(mantissaFactorBD)
+  } else {
+    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
+    let mantissaDecimalFactor = 18 - market.underlyingDecimals + 18
+    let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
+
+    mint.priceUSD = price.reverted ? zeroBD : price.value.toBigDecimal().div(bdFactor)
+  }
+
   mint.save()
 }
 

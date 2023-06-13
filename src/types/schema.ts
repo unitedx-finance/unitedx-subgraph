@@ -756,6 +756,12 @@ export class MintEvent extends Entity {
     this.set('blockNumber', Value.fromI32(0))
     this.set('blockTime', Value.fromI32(0))
     this.set('xTokenSymbol', Value.fromString(''))
+    this.set('supplyRatePerBlock', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('borrowRatePerBlock', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('exchangeRate', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('priceUSD', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('totalBorrow', Value.fromBigDecimal(BigDecimal.zero()))
+    this.set('totalSupply', Value.fromBigDecimal(BigDecimal.zero()))
   }
 
   save(): void {
@@ -853,6 +859,60 @@ export class MintEvent extends Entity {
     } else {
       this.set('underlyingAmount', Value.fromBigDecimal(<BigDecimal>value))
     }
+  }
+
+  get supplyRatePerBlock(): BigDecimal {
+    let value = this.get('supplyRatePerBlock')
+    return value!.toBigDecimal()
+  }
+
+  set supplyRatePerBlock(value: BigDecimal) {
+    this.set('supplyRatePerBlock', Value.fromBigDecimal(value))
+  }
+
+  get borrowRatePerBlock(): BigDecimal {
+    let value = this.get('borrowRatePerBlock')
+    return value!.toBigDecimal()
+  }
+
+  set borrowRatePerBlock(value: BigDecimal) {
+    this.set('borrowRatePerBlock', Value.fromBigDecimal(value))
+  }
+
+  get exchangeRate(): BigDecimal {
+    let value = this.get('exchangeRate')
+    return value!.toBigDecimal()
+  }
+
+  set exchangeRate(value: BigDecimal) {
+    this.set('exchangeRate', Value.fromBigDecimal(value))
+  }
+
+  get priceUSD(): BigDecimal {
+    let value = this.get('priceUSD')
+    return value!.toBigDecimal()
+  }
+
+  set priceUSD(value: BigDecimal) {
+    this.set('priceUSD', Value.fromBigDecimal(value))
+  }
+
+  get totalBorrow(): BigDecimal {
+    let value = this.get('totalBorrow')
+    return value!.toBigDecimal()
+  }
+
+  set totalBorrow(value: BigDecimal) {
+    this.set('totalBorrow', Value.fromBigDecimal(value))
+  }
+
+  get totalSupply(): BigDecimal {
+    let value = this.get('totalSupply')
+    return value!.toBigDecimal()
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set('totalSupply', Value.fromBigDecimal(value))
   }
 }
 
