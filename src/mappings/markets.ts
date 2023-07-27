@@ -3,7 +3,7 @@
 // For each division by 10, add one to exponent to truncate one significant figure
 import { Address, BigDecimal, BigInt, Bytes, log } from '@graphprotocol/graph-ts'
 import { Market, Comptroller } from '../types/schema'
-import { PriceOracle2 } from '../types/templates/XErc20/PriceOracle2'
+import { PriceOracle } from '../types/templates/XErc20/PriceOracle'
 import { ERC20 } from '../types/templates/XErc20/ERC20'
 import { xERC20 } from '../types/templates/XErc20/xErc20'
 
@@ -15,8 +15,8 @@ import {
   zeroBD,
 } from './helpers'
 
-let xUSDCAddress = '0x5248F4a16C66419E92F76E2990b99A82A9b3227d'
-let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'
+let xUSDCAddress = '0x5248F4a16C66419E92F76E2990b99A82A9b3227d'.toLowerCase()
+let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'.toLowerCase()
 
 // Used for all xERC20 contracts
 function getTokenPrice(
@@ -34,9 +34,9 @@ function getTokenPrice(
     return BigDecimal.zero()
   }
   let oracleAddress = Address.fromBytes(comptroller.priceOracle)
-  let underlyingPrice: BigDecimal
+  let underlyingPrice = zeroBD
 
-  /* PriceOracle2 is used from starting of Comptroller.
+  /* PriceOracle is used from starting of Comptroller.
    * This must use the xToken address.
    *
    * Note this returns the value without factoring in token decimals and wei, so we must divide
@@ -45,11 +45,14 @@ function getTokenPrice(
   let mantissaDecimalFactor = 18 - underlyingDecimals + 18
   let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
 
-  let oracle2 = PriceOracle2.bind(oracleAddress)
-  underlyingPrice = oracle2
-    .getUnderlyingPrice(eventAddress)
-    .toBigDecimal()
-    .div(bdFactor)
+  let oracle = PriceOracle.bind(oracleAddress)
+
+  let underlyingPriceCall = oracle.try_getUnderlyingPrice(eventAddress)
+  if (underlyingPriceCall.reverted) {
+    log.error('***CALL FAILED*** : xERC20 getUnderlyingPrice() reverted', [])
+  } else {
+    underlyingPrice = underlyingPriceCall.value.toBigDecimal().div(bdFactor)
+  }
 
   return underlyingPrice
 }
@@ -122,7 +125,7 @@ function getBNBinUSD(blockNumber: i32): BigDecimal {
     comptroller = new Comptroller('1')
   }
   let oracleAddress = Address.fromBytes(comptroller.priceOracle)
-  let oracle = PriceOracle2.bind(oracleAddress)
+  let oracle = PriceOracle.bind(oracleAddress)
 
   let madaPriceUSD = zeroBD
   let madaPrice = oracle.try_getUnderlyingPrice(Address.fromString(xMADAAddress))

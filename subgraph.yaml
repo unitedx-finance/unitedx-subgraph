@@ -26,8 +26,6 @@ dataSources:
           file: ./abis/xtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
-        - name: PriceOracle2
-          file: ./abis/priceOracle2.json
         - name: ERC20
           file: ./abis/erc20.json
         - name: xERC20
@@ -67,8 +65,6 @@ templates:
           file: ./abis/xtoken.json
         - name: PriceOracle
           file: ./abis/priceOracle.json
-        - name: PriceOracle2
-          file: ./abis/priceOracle2.json
         - name: ERC20
           file: ./abis/erc20.json
         - name: Comptroller

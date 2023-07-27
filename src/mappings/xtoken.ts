@@ -23,7 +23,7 @@ import {
   RepayEvent,
   Comptroller,
 } from '../types/schema'
-import { PriceOracle2 } from '../types/templates/XErc20/PriceOracle2'
+import { PriceOracle } from '../types/templates/XErc20/PriceOracle'
 import { createMarket, updateMarket } from './markets'
 import {
   createAccount,
@@ -36,7 +36,7 @@ import {
   mantissaFactorBD,
 } from './helpers'
 
-let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'
+let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'.toLowerCase()
 
 /* Account supplies assets into market and receives xTokens in exchange
  *
@@ -114,7 +114,7 @@ export function handleMint(event: Mint): void {
   }
 
   let oracleAddress = Address.fromBytes(comptroller.priceOracle)
-  let oracle = PriceOracle2.bind(oracleAddress)
+  let oracle = PriceOracle.bind(oracleAddress)
 
   if (market.id == xMADAAddress) {
     const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
