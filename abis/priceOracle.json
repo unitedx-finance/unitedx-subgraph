@@ -49,6 +49,12 @@
         "internalType": "bytes",
         "name": "data",
         "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "baseUnit",
+        "type": "uint256"
       }
     ],
     "name": "NewAggregator",
@@ -112,6 +118,11 @@
         "internalType": "bytes",
         "name": "data",
         "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "baseUnit",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -178,6 +189,11 @@
         "internalType": "bytes[]",
         "name": "_datas",
         "type": "bytes[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_baseUnits",
+        "type": "uint256[]"
       }
     ],
     "name": "setAggregators",

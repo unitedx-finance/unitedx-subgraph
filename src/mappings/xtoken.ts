@@ -36,7 +36,7 @@ import {
   mantissaFactorBD,
 } from './helpers'
 
-let xMADAAddress = '0x8126855f31b6a52ea5942f4f3bf8bf7c8c84f12d'
+let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'
 
 /* Account supplies assets into market and receives xTokens in exchange
  *

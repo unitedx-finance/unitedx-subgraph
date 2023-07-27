@@ -9,7 +9,7 @@
     "create-local": "graph create unitedx-protocol/unitedx-subgraph --node http://127.0.0.1:8020",
     "deploy-local": "graph deploy unitedx-protocol/unitedx-subgraph --debug --ipfs http://localhost:5001 --node http://127.0.0.1:8020/",
     "create-devnet": "graph create unitedx-protocol/unitedx-subgraph --node https://c1-devnet-thegraph.milkomeda.com/",
-    "deploy-devnet": "graph deploy unitedx-protocol/unitedx-subgraph --debug  --node https://c1-devnet-thegraph.milkomeda.com/ --ipfs https://ipfs.milkomeda.com/",
+    "deploy-devnet": "graph deploy unitedx-protocol/unitedx-subgraph --debug  --node https://c1-devnet-thegraph.milkomeda.com/ --ipfs https://ipfs.milkomeda.com/ -l 0.1",
     "deploy": "graph deploy unitedx-protocol/unitedx-subgraph --debug --ipfs https://ipfs.milkomeda.com/ --node https://c1-mainnet-thegraph.milkomeda.com/",
     "prettier": "./node_modules/.bin/prettier —-write '**/*.ts'"
   },

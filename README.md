@@ -1,4 +1,16 @@
-# Venus-Subgraph
+# UnitedX-subgraph
+
+Devnet: https://c1-devnet-thegraph.milkomeda.com/subgraphs/name/unitedx-protocol/unitedx-subgraph
+
+## Deployment
+
+- Update constants in `src/mappings/markets.ts`, if needed
+- Update addresses in `subgraph.yaml`, if needed
+- `yarn codegen`
+- `yarn create-devnet`
+- `yarn deploy-devnet`
+
+# Continuation of readme from Venus-Subgraph
 
 [Venus](https://venus.io/) is an open-source protocol for algorithmic, efficient Money Markets on the Binance Smart Chain. This Subgraph ingests the contracts of Venus protocol.
 

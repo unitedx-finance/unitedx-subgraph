@@ -15,7 +15,7 @@ import { xERC20 } from '../types/templates'
 import { ERC20 } from '../types/templates/XErc20/ERC20'
 
 const comptrollerAddress = Address.fromString(
-  '0xfd36e2c2a6789db23113685031d7f16329158384',
+  '0x4b50A1a9D00BF3C19083D8aCd4f2f28Cc5397a2a',
 )
 
 export function exponentToBigDecimal(decimals: i32): BigDecimal {

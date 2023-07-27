@@ -15,8 +15,8 @@ import {
   zeroBD,
 } from './helpers'
 
-let xUSDCAddress = '0xebc85c04124e55a682ef35d9f1c458ab1f5273b2'
-let xMADAAddress = '0x8126855f31b6a52ea5942f4f3bf8bf7c8c84f12d'
+let xUSDCAddress = '0x5248F4a16C66419E92F76E2990b99A82A9b3227d'
+let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'
 
 // Used for all xERC20 contracts
 function getTokenPrice(

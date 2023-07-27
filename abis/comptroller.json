@@ -77,12 +77,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "contract CToken",
-        "name": "cToken",
-        "type": "address"
-      },
-      {
         "indexed": false,
         "internalType": "uint256",
         "name": "newSpeed",
@@ -90,6 +84,25 @@
       }
     ],
     "name": "CompBorrowSpeedUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "CompClaimed",
     "type": "event"
   },
   {
@@ -139,12 +152,6 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "contract CToken",
-        "name": "cToken",
-        "type": "address"
-      },
       {
         "indexed": false,
         "internalType": "uint256",
@@ -399,6 +406,31 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "contract CToken",
+        "name": "cToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldCompWeightMantissa",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newCompWeightMantissa",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewCompWeight",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "oldLiquidationIncentiveMantissa",
         "type": "uint256"
@@ -492,6 +524,35 @@
     ],
     "name": "_grantComp",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "lockTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "compContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "reservoirContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "_initializeCompParameters",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -591,23 +652,42 @@
   {
     "inputs": [
       {
-        "internalType": "contract CToken[]",
-        "name": "cTokens",
-        "type": "address[]"
+        "internalType": "uint256",
+        "name": "supplySpeed",
+        "type": "uint256"
       },
       {
-        "internalType": "uint256[]",
-        "name": "supplySpeeds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "borrowSpeeds",
-        "type": "uint256[]"
+        "internalType": "uint256",
+        "name": "borrowSpeed",
+        "type": "uint256"
       }
     ],
     "name": "_setCompSpeeds",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract CToken",
+        "name": "cToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newCompWeightMantissa",
+        "type": "uint256"
+      }
+    ],
+    "name": "_setCompWeight",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -782,7 +862,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -1060,14 +1140,21 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "compAddress",
+    "outputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
-    "name": "compBorrowSpeeds",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "compBorrowSpeed",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1127,6 +1214,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "compClaimed",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -1159,57 +1259,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "compRate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "compReceivable",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "compSpeeds",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1234,14 +1283,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "compSupplySpeeds",
+    "inputs": [],
+    "name": "compSupplySpeed",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1278,12 +1321,49 @@
   },
   {
     "inputs": [],
+    "name": "compUnlockTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "comptrollerImplementation",
     "outputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "distributionSchedule",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "compSpeed",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1324,24 +1404,6 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "affectedUsers",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "fixBadAccruals",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1420,19 +1482,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getCompAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1471,6 +1520,52 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "cToken",
+        "type": "address"
+      }
+    ],
+    "name": "getMarketCompRatio",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "mantissa",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ExponentialNoError.Exp",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalCompWeight",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "mantissa",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ExponentialNoError.Exp",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -1672,9 +1767,9 @@
         "type": "uint256"
       },
       {
-        "internalType": "bool",
-        "name": "isComped",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "compWeightMantissa",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1822,19 +1917,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "proposal65FixExecuted",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1956,6 +2038,19 @@
     "name": "repayBorrowVerify",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "reservoir",
+    "outputs": [
+      {
+        "internalType": "contract Reservoir",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
