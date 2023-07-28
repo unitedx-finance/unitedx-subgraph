@@ -100,6 +100,11 @@ export function handleMint(event: Mint): void {
     ? zeroBD
     : totalSupply.value.toBigDecimal().div(exponentToBigDecimal(xToken.decimals()))
 
+  let totalSupplyUnderlying = mint.totalSupply
+    .times(mint.exchangeRate)
+    .div(exponentToBigDecimal(18 + market.underlyingDecimals - xTokenDecimals))
+  mint.totalSupplyUnderlying = totalSupplyUnderlying
+
   let totalBorrow = xToken.try_totalBorrows()
   mint.totalBorrow = totalBorrow.reverted
     ? zeroBD

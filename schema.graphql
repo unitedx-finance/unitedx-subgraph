@@ -233,6 +233,7 @@ type MintEvent implements XTokenTransfer @entity {
     priceUSD: BigDecimal!
     totalBorrow: BigDecimal!
     totalSupply: BigDecimal!
+    totalSupplyUnderlying: BigDecimal!
 }
 
 """
