@@ -1,5 +1,5 @@
 /* eslint-disable prefer-const */ // to satisfy AS compiler
-import { Address, log } from '@graphprotocol/graph-ts'
+import { Address, ethereum, log } from '@graphprotocol/graph-ts'
 import {
   Mint,
   Redeem,
@@ -22,6 +22,7 @@ import {
   BorrowEvent,
   RepayEvent,
   Comptroller,
+  RatesChangeEvent,
 } from '../types/schema'
 import { PriceOracle } from '../types/templates/XErc20/PriceOracle'
 import { createMarket, updateMarket } from './markets'
@@ -37,6 +38,76 @@ import {
 } from './helpers'
 
 let xMADAAddress = '0x54115dbEc05C371303243f42a97052BB3A04d49c'.toLowerCase()
+
+export function handleRatesChangeEvent(event: ethereum.Event, market: Market): void {
+  let ratesChangeID = event.transaction.hash
+    .toHexString()
+    .concat('-')
+    .concat(event.transactionLogIndex.toString())
+  let ratesChange = new RatesChangeEvent(ratesChangeID)
+  ratesChange.blockNumber = event.block.number.toI32()
+  ratesChange.blockTime = event.block.timestamp.toI32()
+  ratesChange.xTokenSymbol = market.symbol
+
+  const xToken = XToken.bind(Address.fromBytes(event.address))
+  let supplyRatePerBlock = xToken.try_supplyRatePerBlock()
+  ratesChange.supplyRatePerBlock = supplyRatePerBlock.reverted
+    ? zeroBD
+    : supplyRatePerBlock.value.toBigDecimal()
+
+  let borrowRatePerBlock = xToken.try_borrowRatePerBlock()
+  ratesChange.borrowRatePerBlock = borrowRatePerBlock.reverted
+    ? zeroBD
+    : borrowRatePerBlock.value.toBigDecimal()
+
+  let exchangeRateStored = xToken.try_exchangeRateStored()
+  ratesChange.exchangeRate = exchangeRateStored.reverted
+    ? zeroBD
+    : exchangeRateStored.value.toBigDecimal()
+
+  let totalSupply = xToken.try_totalSupply()
+  ratesChange.totalSupply = totalSupply.reverted
+    ? zeroBD
+    : totalSupply.value.toBigDecimal().div(exponentToBigDecimal(xToken.decimals()))
+
+  let totalSupplyUnderlying = ratesChange.totalSupply
+    .times(ratesChange.exchangeRate)
+    .div(exponentToBigDecimal(18 + market.underlyingDecimals - xTokenDecimals))
+  ratesChange.totalSupplyUnderlying = totalSupplyUnderlying
+
+  let totalBorrow = xToken.try_totalBorrows()
+  ratesChange.totalBorrow = totalBorrow.reverted
+    ? zeroBD
+    : totalBorrow.value
+        .toBigDecimal()
+        .div(exponentToBigDecimal(market.underlyingDecimals))
+        .truncate(market.underlyingDecimals)
+
+  let comptroller = Comptroller.load('1')
+  if (!comptroller) {
+    comptroller = new Comptroller('1')
+  }
+
+  let oracleAddress = Address.fromBytes(comptroller.priceOracle)
+  let oracle = PriceOracle.bind(oracleAddress)
+
+  if (market.id == xMADAAddress) {
+    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
+    ratesChange.priceUSD = price.reverted
+      ? zeroBD
+      : price.value.toBigDecimal().div(mantissaFactorBD)
+  } else {
+    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
+    let mantissaDecimalFactor = 18 - market.underlyingDecimals + 18
+    let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
+
+    ratesChange.priceUSD = price.reverted
+      ? zeroBD
+      : price.value.toBigDecimal().div(bdFactor)
+  }
+
+  ratesChange.save()
+}
 
 /* Account supplies assets into market and receives xTokens in exchange
  *
@@ -79,62 +150,9 @@ export function handleMint(event: Mint): void {
   mint.xTokenSymbol = market.symbol
   mint.underlyingAmount = underlyingAmount
 
-  const xToken = XToken.bind(Address.fromBytes(event.address))
-  let supplyRatePerBlock = xToken.try_supplyRatePerBlock()
-  mint.supplyRatePerBlock = supplyRatePerBlock.reverted
-    ? zeroBD
-    : supplyRatePerBlock.value.toBigDecimal()
-
-  let borrowRatePerBlock = xToken.try_borrowRatePerBlock()
-  mint.borrowRatePerBlock = borrowRatePerBlock.reverted
-    ? zeroBD
-    : borrowRatePerBlock.value.toBigDecimal()
-
-  let exchangeRateStored = xToken.try_exchangeRateStored()
-  mint.exchangeRate = exchangeRateStored.reverted
-    ? zeroBD
-    : exchangeRateStored.value.toBigDecimal()
-
-  let totalSupply = xToken.try_totalSupply()
-  mint.totalSupply = totalSupply.reverted
-    ? zeroBD
-    : totalSupply.value.toBigDecimal().div(exponentToBigDecimal(xToken.decimals()))
-
-  let totalSupplyUnderlying = mint.totalSupply
-    .times(mint.exchangeRate)
-    .div(exponentToBigDecimal(18 + market.underlyingDecimals - xTokenDecimals))
-  mint.totalSupplyUnderlying = totalSupplyUnderlying
-
-  let totalBorrow = xToken.try_totalBorrows()
-  mint.totalBorrow = totalBorrow.reverted
-    ? zeroBD
-    : totalBorrow.value
-        .toBigDecimal()
-        .div(exponentToBigDecimal(market.underlyingDecimals))
-        .truncate(market.underlyingDecimals)
-
-  let comptroller = Comptroller.load('1')
-  if (!comptroller) {
-    comptroller = new Comptroller('1')
-  }
-
-  let oracleAddress = Address.fromBytes(comptroller.priceOracle)
-  let oracle = PriceOracle.bind(oracleAddress)
-
-  if (market.id == xMADAAddress) {
-    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
-    mint.priceUSD = price.reverted
-      ? zeroBD
-      : price.value.toBigDecimal().div(mantissaFactorBD)
-  } else {
-    const price = oracle.try_getUnderlyingPrice(Address.fromString(market.id))
-    let mantissaDecimalFactor = 18 - market.underlyingDecimals + 18
-    let bdFactor = exponentToBigDecimal(mantissaDecimalFactor)
-
-    mint.priceUSD = price.reverted ? zeroBD : price.value.toBigDecimal().div(bdFactor)
-  }
-
   mint.save()
+
+  handleRatesChangeEvent(event, market)
 }
 
 /*  Account supplies xTokens into market and receives underlying asset in exchange
@@ -177,6 +195,8 @@ export function handleRedeem(event: Redeem): void {
   redeem.xTokenSymbol = market.symbol
   redeem.underlyingAmount = underlyingAmount
   redeem.save()
+
+  handleRatesChangeEvent(event, market)
 }
 
 /* Borrow assets from the protocol. All values either BNB or BEP20
@@ -253,6 +273,8 @@ export function handleBorrow(event: Borrow): void {
   borrow.blockTime = event.block.timestamp.toI32()
   borrow.underlyingSymbol = market.underlyingSymbol
   borrow.save()
+
+  handleRatesChangeEvent(event, market)
 }
 
 /* Repay some amount borrowed. Anyone can repay anyones balance
@@ -331,6 +353,8 @@ export function handleRepayBorrow(event: RepayBorrow): void {
   repay.underlyingSymbol = market.underlyingSymbol
   repay.payer = event.params.payer
   repay.save()
+
+  handleRatesChangeEvent(event, market)
 }
 
 /*
@@ -350,6 +374,10 @@ export function handleRepayBorrow(event: RepayBorrow): void {
  *    add liquidation counts in this handler.
  */
 export function handleLiquidateBorrow(event: LiquidateBorrow): void {
+  let market = Market.load(event.address.toHexString())
+  if (!market) {
+    market = createMarket(event.address.toHexString())
+  }
   let liquidatorID = event.params.liquidator.toHex()
   let liquidator = Account.load(liquidatorID)
   if (liquidator == null) {
@@ -402,6 +430,8 @@ export function handleLiquidateBorrow(event: LiquidateBorrow): void {
   liquidation.underlyingRepayAmount = underlyingRepayAmount
   liquidation.xTokenSymbol = marketXTokenLiquidated.symbol
   liquidation.save()
+
+  handleRatesChangeEvent(event, market)
 }
 
 /* Transferring of xTokens
@@ -549,4 +579,5 @@ export function handleNewMarketInterestRateModel(
   }
   market.interestRateModelAddress = event.params.newInterestRateModel
   market.save()
+  handleRatesChangeEvent(event, market)
 }

@@ -207,6 +207,27 @@ type TransferEvent implements XTokenTransfer @entity {
 }
 
 """
+RatesChangeEvent stores information when supply/borrow/repay/withdraw/liquidation happens.
+"""
+type RatesChangeEvent @entity {
+    "Transaction hash concatenated with log index"
+    id: ID!
+    "Block number"
+    blockNumber: Int!
+    "Block time"
+    blockTime: Int!
+    "Symbol of the xToken transferred"
+    xTokenSymbol: String!
+    supplyRatePerBlock: BigDecimal!
+    borrowRatePerBlock: BigDecimal!
+    exchangeRate: BigDecimal!
+    priceUSD: BigDecimal!
+    totalBorrow: BigDecimal!
+    totalSupply: BigDecimal!
+    totalSupplyUnderlying: BigDecimal!
+}
+
+"""
 MintEvent stores information for mints. From address will always be a xToken
 market address
 """
@@ -227,13 +248,6 @@ type MintEvent implements XTokenTransfer @entity {
     xTokenSymbol: String!
     "Underlying token amount transferred"
     underlyingAmount: BigDecimal
-    supplyRatePerBlock: BigDecimal!
-    borrowRatePerBlock: BigDecimal!
-    exchangeRate: BigDecimal!
-    priceUSD: BigDecimal!
-    totalBorrow: BigDecimal!
-    totalSupply: BigDecimal!
-    totalSupplyUnderlying: BigDecimal!
 }
 
 """
