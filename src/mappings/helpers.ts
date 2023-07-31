@@ -43,12 +43,7 @@ export function createAccountXToken(
   xTokenStats.market = marketID
   xTokenStats.account = account
   xTokenStats.accrualBlockNumber = BigInt.fromI32(0)
-  // we need to set an initial real onchain value to this otherwise it will never
-  // be accurate
-  const xTokenContract = ERC20.bind(Address.fromString(marketID))
-  xTokenStats.xTokenBalance = new BigDecimal(
-    xTokenContract.balanceOf(Address.fromString(account)),
-  )
+  xTokenStats.xTokenBalance = zeroBD
   // log.debug('[createAccountXToken] xTokenBalance: {}, account: {}, xToken: {}', [xTokenStats.xTokenBalance.toString(), account, marketID]);
 
   xTokenStats.totalUnderlyingSupplied = zeroBD
